@@ -4,6 +4,8 @@ import asyncio
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import uvicorn
 from dotenv import load_dotenv
 
@@ -13,7 +15,7 @@ load_dotenv()
 from app.core.config import settings
 from app.routers import users, auth
 
-import time 
+import time
 
 from app.services.firestore import firestore_service, initialize_firestore_service
 
@@ -31,6 +33,12 @@ app = FastAPI(
     docs_url=f"{settings.API_V1_STR}/docs",
     redoc_url=f"{settings.API_V1_STR}/redoc",
 )
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Configure templates
+templates = Jinja2Templates(directory="app/templates")
 
 # Add CORS middleware
 app.add_middleware(
@@ -69,7 +77,12 @@ app.include_router(
 
 # Root endpoint
 @app.get("/")
-async def root():
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# API info endpoint
+@app.get("/api")
+async def api_info():
     return {
         "message": "Welcome to the User Management API",
         "docs": f"{settings.API_V1_STR}/docs",
