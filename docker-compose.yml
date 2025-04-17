@@ -13,6 +13,7 @@ services:
       - SECRET_KEY=dev_secret_key
       - GCP_PROJECT_ID=simple-manip-survey-250416
       - GOOGLE_APPLICATION_CREDENTIALS=/app/iac/service-account-key.json
+      - FIRESTORE_EMULATOR_HOST=firestore-emulator:8080
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - firestore-emulator

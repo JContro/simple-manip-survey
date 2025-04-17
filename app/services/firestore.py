@@ -1,7 +1,9 @@
 import uuid
+import os
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-
+import asyncio
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
@@ -9,6 +11,9 @@ from app.core.config import settings
 from app.core.exceptions import NotFoundError, DatabaseError
 from app.models.user import UserCreate, UserUpdate, UserInDB
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 class FirestoreService:
     """
     Service for interacting with Firestore database.
@@ -17,8 +22,44 @@ class FirestoreService:
         """
         Initialize Firestore client.
         """
-        self.db = firestore.Client(project=settings.GCP_PROJECT_ID)
+        self.db = None #initialize as none, so we can check if it is initialized later
+        self.collection = None
+
+    async def initialize_firestore(self): #make this async
+        """
+        Initialize the Firestore client asynchronously.
+        """
+        # Check if we're running with the emulator
+        emulator_host = os.environ.get("FIRESTORE_EMULATOR_HOST")
+
+        logger.info(f"Initializing Firestore client with project ID: {settings.GCP_PROJECT_ID}")
+        logger.info(f"FIRESTORE_EMULATOR_HOST: {emulator_host}")
+        logger.info(f"GOOGLE_APPLICATION_CREDENTIALS: {os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')}")
+
+        if emulator_host:
+            logger.info(f"Using Firestore emulator at {emulator_host}")
+            if "GOOGLE_APPLICATION_CREDENTIALS" in os.environ:
+                logger.info("Unsetting GOOGLE_APPLICATION_CREDENTIALS for emulator use")
+            self.db = firestore.Client(project=settings.GCP_PROJECT_ID)
+        else:
+            logger.info("Using production Firestore")
+            self.db = firestore.Client(project=settings.GCP_PROJECT_ID)
+
+        logger.info("Firestore client initialized successfully")
+
+        try:
+            test_ref = self.db.collection("_connection_test")
+            docs = list(test_ref.limit(1).stream())
+            if docs:
+                logger.info("Successfully verified Firestore connection and collection exists.")
+            else:
+                logger.info("Successfully verified Firestore connection, but collection is empty.")
+
+        except Exception as e:
+            logger.warning(f"Could not verify Firestore connection: {str(e)}")
+
         self.collection = self.db.collection(settings.FIRESTORE_COLLECTION)
+        logger.info(f"Using collection: {settings.FIRESTORE_COLLECTION}")
 
     async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -176,5 +217,14 @@ class FirestoreService:
         except Exception as e:
             raise DatabaseError(f"Error deleting user: {str(e)}")
 
+
 # Create a singleton instance
 firestore_service = FirestoreService()
+
+async def initialize_firestore_service():
+    if os.environ.get('FIRESTORE_EMULATOR_HOST'):
+        logger.info("Delaying Firestore initialization for 30 seconds (local development).")
+        await asyncio.sleep(30)
+        logger.info("Resuming Firestore initialization.")
+    await firestore_service.initialize_firestore()
+    return firestore_service

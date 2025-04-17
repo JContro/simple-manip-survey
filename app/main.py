@@ -1,11 +1,21 @@
 import logging
+import os
+import asyncio
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from app.core.config import settings
 from app.routers import users, auth
+
+import time 
+
+from app.services.firestore import firestore_service, initialize_firestore_service
 
 # Configure logging
 logging.basicConfig(
@@ -64,6 +74,20 @@ async def root():
         "message": "Welcome to the User Management API",
         "docs": f"{settings.API_V1_STR}/docs",
     }
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Startup event handler to check Firestore connection
+    """
+    logger.info("Application startup...")
+    logger.info(f"Environment variables:")
+    logger.info(f"  GCP_PROJECT_ID: {settings.GCP_PROJECT_ID}")
+    logger.info(f"  FIRESTORE_COLLECTION: {settings.FIRESTORE_COLLECTION}")
+    logger.info(f"  FIRESTORE_EMULATOR_HOST: {os.environ.get('FIRESTORE_EMULATOR_HOST')}")
+    logger.info(f"  GOOGLE_APPLICATION_CREDENTIALS: {os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')}")
+    
+    await initialize_firestore_service()
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
