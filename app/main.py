@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db
+from app.services.firestore import db, get_emails, save_email, email_exists
 import datetime
 
 app = FastAPI()
@@ -45,6 +45,16 @@ class EmailData(BaseModel):
 
 @app.post("/save_email")
 async def save_email_endpoint(email_data: EmailData):
-    """Receives an email and saves it to Firestore."""
-    result = save_email(email_data.email)
+    """Receives an email and saves it to Firestore, if it doesn't already exist."""
+    if email_exists(email_data.email):
+        print(f"Email '{email_data.email}' already exists, skipping save.")
+        return {"status": "info", "message": "Email already exists"}
+    else:
+        result = save_email(email_data.email)
+        return result
+
+@app.get("/emails")
+async def read_emails():
+    """Retrieves all saved emails from Firestore."""
+    result = get_emails()
     return result
