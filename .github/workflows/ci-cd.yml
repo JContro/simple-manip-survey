@@ -100,7 +100,7 @@ jobs:
           project_id = "${{ env.PROJECT_ID }}"
           region = "${{ env.REGION }}"
           container_image = "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          jwt_secret = "${{ secrets.JWT_SECRET }}"
+
           EOF
 
       - name: Terraform Init

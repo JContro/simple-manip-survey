@@ -42,10 +42,3 @@ variable "firestore_collection" {
   type        = string
   default     = "users"
 }
-
-variable "jwt_secret" {
-  description = "The secret key for JWT token generation"
-  type        = string
-  default     = "default-jwt-secret-change-in-production"
-  sensitive   = true
-}

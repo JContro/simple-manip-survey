@@ -29,28 +29,6 @@ resource "google_firestore_database" "database" {
   depends_on = [google_project_service.services["firestore.googleapis.com"]]
 }
 
-# Create a Secret Manager secret for JWT
-resource "google_secret_manager_secret" "jwt_secret" {
-  project   = var.project_id
-  secret_id = "jwt-secret"
-
-  replication {
-    user_managed {
-      replicas {
-        location = "europe-west2"
-      }
-    }
-  }
-
-  depends_on = [google_project_service.services["secretmanager.googleapis.com"]]
-}
-
-# Create the JWT secret version
-resource "google_secret_manager_secret_version" "jwt_secret_version" {
-  secret      = google_secret_manager_secret.jwt_secret.id
-  secret_data = var.jwt_secret
-}
-
 # Create a Cloud Run service
 resource "google_cloud_run_service" "api" {
   name     = var.service_name
@@ -66,11 +44,6 @@ resource "google_cloud_run_service" "api" {
             cpu    = "1000m"
             memory = "512Mi"
           }
-        }
-
-        env {
-          name  = "SECRET_KEY"
-          value = var.jwt_secret
         }
 
         env {
@@ -113,14 +86,6 @@ resource "google_cloud_run_service_iam_member" "public_access" {
   service  = google_cloud_run_service.api.name
   role     = "roles/run.invoker"
   member   = "allUsers"
-}
-
-# Grant the service account access to Secret Manager
-resource "google_secret_manager_secret_iam_member" "secret_access" {
-  project   = var.project_id
-  secret_id = google_secret_manager_secret.jwt_secret.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.service_account_email}"
 }
 
 # Grant the service account access to Firestore
