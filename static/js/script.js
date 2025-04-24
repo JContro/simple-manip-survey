@@ -221,4 +221,42 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 1500);
     }, 1500);
   }
+
+  // Handle email form submission on index.html
+  const emailForm = document.querySelector("form");
+  if (emailForm) {
+    emailForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const emailInput = document.getElementById("email");
+      if (emailInput && emailInput.value) {
+        const email = emailInput.value;
+
+        // Save to local storage
+        localStorage.setItem("userEmail", email);
+        console.log("Email saved to local storage:", email);
+
+        // Send to backend API
+        fetch("/save_email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: email }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Backend response:", data);
+            if (data.status === "success") {
+              alert("Email saved successfully!");
+            } else {
+              alert("Error saving email: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while saving the email.");
+          });
+      }
+    });
+  }
 });

@@ -1,10 +1,13 @@
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.services.firestore import db
 import datetime
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -34,3 +37,14 @@ async def read_test_data():
             return {"status": "not found", "message": "Test document not found"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+from pydantic import BaseModel
+
+class EmailData(BaseModel):
+    email: str
+
+@app.post("/save_email")
+async def save_email_endpoint(email_data: EmailData):
+    """Receives an email and saves it to Firestore."""
+    result = save_email(email_data.email)
+    return result

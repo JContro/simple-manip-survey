@@ -16,5 +16,20 @@ def get_firestore_client():
         print("Connecting to production Firestore")
     return client
 
+def save_email(email: str):
+    """Saves an email to the 'emails' collection in Firestore."""
+    try:
+        emails_collection = db.collection("emails")
+        email_doc_ref = emails_collection.document() # Auto-generate document ID
+        email_doc_ref.set({
+            "email": email,
+            "timestamp": firestore.SERVER_TIMESTAMP # Use server timestamp
+        })
+        print(f"Email '{email}' saved to Firestore")
+        return {"status": "success", "message": "Email saved successfully"}
+    except Exception as e:
+        print(f"Error saving email to Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
 # Initialize client when the module is imported
 db = get_firestore_client()
