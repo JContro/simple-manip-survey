@@ -4,97 +4,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Survey Application</title>
-    <link rel="stylesheet" href="../static/css/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Ethics Statement</title>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <h1>Survey<span>App</span></h1>
-            </div>
-        </header>
+    <h1>Ethics Statement</h1>
+    <p>This research project adheres to strict ethical guidelines to protect participant privacy and data integrity:</p>
+    <ul>
+        <li><strong>Personal Identifiable Information (PII) Protection:</strong> The final dataset will not contain any
+            PII that will be made public.</li>
+        <li><strong>Email Data Usage:</strong> Participant emails will be stored in a separate, secure database. They
+            will be collected and used exclusively for the purpose of distributing vouchers to eligible participants.
+        </li>
+        <li><strong>Data Retention:</strong> Upon conclusion of the experiment, all email data will be permanently
+            erased from our systems.</li>
+        <li><strong>Data Removal Rights:</strong> If you wish to have your email data removed from our records at any
+            point during the study, please contact jack.contro@kcl.ac.uk with your request.</li>
+        <li><strong>Data Security:</strong> We employ robust security measures to protect all collected data throughout
+            the duration of the study.</li>
+        <li><strong>Voluntary Participation:</strong> Your participation in this study is entirely voluntary, and you
+            may withdraw at any time without penalty.</li>
+    </ul>
+    <p>By participating in this study, you acknowledge that you have read and understood this ethics statement. If you
+        have any questions or concerns about the ethical aspects of this research, please contact the principal
+        investigator at the email address provided above.</p>
 
-        <main>
-            <section class="welcome">
-                <h2>Welcome to Our Survey Platform</h2>
-                <p>Help us improve by sharing your valuable feedback. Your insights drive our decisions and shape the
-                    future of our services.</p>
-                <div class="cta-button">
-                    <button id="start-survey-btn">Start Survey <i class="fas fa-arrow-right"></i></button>
-                </div>
-            </section>
-
-            <section class="auth-container">
-                <div class="tabs">
-                    <div class="tab-header">
-                        <div class="active" id="login-tab">Login</div>
-                        <div id="register-tab">Register</div>
-                    </div>
-                    <div class="tab-content">
-                        <div class="tab-body active" id="login-form">
-                            <form id="login">
-                                <div class="form-group">
-                                    <label for="login-email">Email</label>
-                                    <input type="email" id="login-email" required>
-                                    <span class="error-message" id="login-email-error"></span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="login-password">Password</label>
-                                    <input type="password" id="login-password" required>
-                                    <span class="error-message" id="login-password-error"></span>
-                                </div>
-                                <div class="form-group remember-me">
-                                    <input type="checkbox" id="remember-me">
-                                    <label for="remember-me">Remember me</label>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit">Login</button>
-                                </div>
-                                <div class="form-message" id="login-message"></div>
-                            </form>
-                        </div>
-                        <div class="tab-body" id="register-form">
-                            <form id="register">
-                                <div class="form-group">
-                                    <label for="register-name">Full Name</label>
-                                    <input type="text" id="register-name" required>
-                                    <span class="error-message" id="register-name-error"></span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="register-email">Email</label>
-                                    <input type="email" id="register-email" required>
-                                    <span class="error-message" id="register-email-error"></span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="register-password">Password</label>
-                                    <input type="password" id="register-password" required>
-                                    <span class="error-message" id="register-password-error"></span>
-                                </div>
-                                <div class="form-group">
-                                    <label for="register-confirm-password">Confirm Password</label>
-                                    <input type="password" id="register-confirm-password" required>
-                                    <span class="error-message" id="register-confirm-password-error"></span>
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit">Register</button>
-                                </div>
-                                <div class="form-message" id="register-message"></div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <footer>
-            <p>&copy; 2025 SurveyApp. All rights reserved.</p>
-        </footer>
-    </div>
-
-    <script src="../static/js/script.js"></script>
+    <form>
+        <label for="email">Enter Your Email</label><br>
+        <input type="email" id="email" name="email"><br><br>
+        <button type="submit">submit</button>
+    </form>
 </body>
 
 </html>
