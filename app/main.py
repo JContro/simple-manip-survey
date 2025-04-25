@@ -13,7 +13,13 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Custom url_for to force HTTPS for static files
+    def url_for_https(name: str, **path_params: any) -> str:
+        if name == "static":
+            return str(request.url_for(name, **path_params).replace(scheme="https"))
+        return str(request.url_for(name, **path_params))
+
+    return templates.TemplateResponse("index.html", {"request": request, "url_for": url_for_https})
 
 @app.post("/write_test_data")
 async def write_test_data():
