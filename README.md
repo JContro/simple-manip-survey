@@ -1,31 +1,29 @@
-# User Management API
+# Email Collection Service
 
-A FastAPI application with Docker containerization for deployment on Google Cloud Run. The application establishes a connection to Firestore, ensuring proper database and collection initialization. It includes JWT-based authentication, error handling, logging, and monitoring.
+A simple FastAPI application with Docker containerization for collecting emails and storing them in Firestore.
 
 ## Features
 
-- FastAPI REST API with CRUD operations for user management
-- JWT-based authentication
+- FastAPI REST API for email collection
 - Firestore database integration
 - Docker containerization
-- Google Cloud Run deployment
+- Google Cloud Run deployment (configured via Terraform)
 - Terraform Infrastructure as Code
 - GitHub Actions CI/CD pipeline
-- Comprehensive testing
 
 ## Project Structure
 
 The project follows a modular structure:
 
 - `app/`: Application code
-  - `core/`: Core functionality (config, security, exceptions)
-  - `models/`: Pydantic models
-  - `routers/`: API routes
-  - `services/`: Business logic and external services
+  - `main.py`: FastAPI application entry point and API endpoints
+  - `services/firestore.py`: Firestore database service for email operations
 - `iac/`: Infrastructure as Code
-  - `terraform/`: Terraform configuration
-- `tests/`: Test files
+  - `terraform/`: Terraform configuration for GCP resources
 - `docs/`: Documentation
+- `static/`: Static files (CSS, JS)
+- `templates/`: HTML templates
+- `tests/`: Test files
 
 ## Prerequisites
 
@@ -54,12 +52,12 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
+3. Set up environment variables (refer to `.env.example`):
 
 ```bash
-export SECRET_KEY="your-secret-key"
-export GCP_PROJECT_ID="simple-manip-survey-250416"
-export GOOGLE_APPLICATION_CREDENTIALS="./iac/service-account-key.json"
+# Example:
+export GCP_PROJECT_ID="your-gcp-project-id"
+export FIRESTORE_EMULATOR_HOST="localhost:8080" # For local development with emulator
 ```
 
 ### Running the Application
@@ -73,14 +71,14 @@ uvicorn app.main:app --reload
 #### Using Docker Compose:
 
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
-The API will be available at http://localhost:8000.
+The application will be available at http://localhost:8000.
 
 API documentation is available at:
-- Swagger UI: http://localhost:8000/api/v1/docs
-- ReDoc: http://localhost:8000/api/v1/redoc
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
 ### Running Tests
 
@@ -89,30 +87,6 @@ pytest
 ```
 
 ## Deployment
-
-### Manual Deployment
-
-1. Build the Docker image:
-
-```bash
-docker build -t gcr.io/simple-manip-survey-250416/user-api:latest .
-```
-
-2. Push the image to Google Container Registry:
-
-```bash
-docker push gcr.io/simple-manip-survey-250416/user-api:latest
-```
-
-3. Deploy to Cloud Run:
-
-```bash
-gcloud run deploy user-api \
-  --image gcr.io/simple-manip-survey-250416/user-api:latest \
-  --platform managed \
-  --region europe-west2 \
-  --allow-unauthenticated
-```
 
 ### Using Terraform
 
@@ -145,25 +119,17 @@ terraform apply
 The CI/CD pipeline is automatically triggered when changes are pushed to the main branch. It performs the following steps:
 
 1. Run tests
-2. Build and push the Docker image
-3. Apply Terraform changes
-4. Deploy to Cloud Run
+2. Build and push the Docker image to Artifact Registry
+3. Apply Terraform changes to provision/update infrastructure
+4. Deploy the application to Cloud Run
 
 ## API Endpoints
 
-### Authentication
-
-- `POST /api/v1/auth/register`: Register a new user
-- `POST /api/v1/auth/login`: Login and get access token
-- `GET /api/v1/auth/me`: Get current user information
-
-### Users
-
-- `GET /api/v1/users`: List all users (protected)
-- `GET /api/v1/users/{user_id}`: Get a specific user (protected)
-- `POST /api/v1/users`: Create a new user
-- `PUT /api/v1/users/{user_id}`: Update a user (protected)
-- `DELETE /api/v1/users/{user_id}`: Delete a user (protected)
+- `GET /`: Serves the main HTML page.
+- `POST /write_test_data`: Writes a test document to Firestore.
+- `GET /read_test_data`: Reads the test document from Firestore.
+- `POST /save_email`: Receives an email and saves it to Firestore.
+- `GET /emails`: Retrieves all saved emails from Firestore.
 
 ## License
 

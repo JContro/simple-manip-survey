@@ -58,3 +58,8 @@ async def read_emails():
     """Retrieves all saved emails from Firestore."""
     result = get_emails()
     return result
+
+@app.get("/healthcheck")
+async def healthcheck():
+    """Healthcheck endpoint to check if the application is running."""
+    return {"status": "ok"}

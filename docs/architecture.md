@@ -1,6 +1,6 @@
-# FastAPI Application with Authentication, GCP Cloud Run, Firestore, Terraform IaC, and GitHub Actions CI/CD
+# Email Collection Service Architecture
 
-This document outlines the architecture and implementation plan for a FastAPI application with Docker containerization, Firestore integration, JWT authentication, Terraform Infrastructure as Code, and GitHub Actions CI/CD pipeline.
+This document outlines the architecture and implementation details for a simple FastAPI application designed to collect emails and store them in Google Cloud Firestore. The application is containerized using Docker, deployed on Google Cloud Run using Terraform for Infrastructure as Code, and utilizes GitHub Actions for CI/CD.
 
 ## 1. Project Structure
 
@@ -11,37 +11,20 @@ simple-manip-survey/
 │       └── ci-cd.yml         # GitHub Actions workflow for CI/CD
 ├── app/
 │   ├── __init__.py
-│   ├── main.py               # FastAPI application entry point
-│   ├── core/
-│   │   ├── config.py         # Application configuration
-│   │   ├── security.py       # Authentication and security utilities
-│   │   └── exceptions.py     # Custom exception handlers
-│   ├── models/
-│   │   ├── user.py           # Pydantic models for user data
-│   │   └── token.py          # Pydantic models for authentication tokens
-│   ├── routers/
-│   │   ├── users.py          # API routes for user operations
-│   │   └── auth.py           # API routes for authentication
+│   ├── main.py               # FastAPI application entry point and API endpoints
 │   └── services/
-│       ├── firestore.py      # Firestore database service
-│       └── auth.py           # Authentication service
+│       └── firestore.py      # Firestore database service for email operations
 ├── iac/
-│   ├── key_information.txt   # (existing) GCP project information
-│   ├── service-account-key.json  # (existing) GCP service account key
-│   ├── gcloud_setup.py       # (existing) GCP setup script
-│   ├── github_test.py        # (existing) GitHub integration test
 │   └── terraform/
 │       ├── main.tf           # Main Terraform configuration
 │       ├── variables.tf      # Terraform variables
 │       ├── outputs.tf        # Terraform outputs
 │       └── backend.tf        # Terraform backend configuration
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py           # Test configuration
-│   ├── test_users.py         # Tests for user API
-│   └── test_auth.py          # Tests for authentication
 ├── docs/
 │   └── architecture.md       # This architecture document
+├── static/                   # Static files (CSS, JS)
+├── templates/                # HTML templates
+├── tests/                    # Test files
 ├── .gitignore                # Git ignore file
 ├── Dockerfile                # Docker configuration for the application
 ├── docker-compose.yml        # Docker Compose for local development
@@ -51,215 +34,96 @@ simple-manip-survey/
 
 ## 2. FastAPI Application Components
 
-### 2.1 Core Application (`app/main.py`)
-- FastAPI application setup with CORS middleware
-- Health check endpoint
-- API router registration
-- Firestore initialization
-- Authentication middleware
-- Logging configuration
+### 2.1 Main Application (`app/main.py`)
 
-### 2.2 Authentication Components
-- `app/core/security.py`: JWT token generation and validation
-- `app/models/token.py`: Token schemas
-- `app/routers/auth.py`: Authentication endpoints
-- `app/services/auth.py`: Authentication service
+- FastAPI application setup.
+- Serves the main HTML page (`/`).
+- Includes endpoints for:
+    - Writing and reading test data (`/write_test_data`, `/read_test_data`).
+    - Saving emails to Firestore (`/save_email`).
+    - Retrieving all saved emails from Firestore (`/emails`).
+- Utilizes `app.services.firestore` for database interactions.
 
-### 2.3 Data Models (`app/models/user.py`)
-- Pydantic models for user data:
-  - `UserCreate`: Schema for creating a new user (name, email, password)
-  - `UserResponse`: Schema for user responses (id, name, email)
-  - `UserUpdate`: Schema for updating user data (optional name, email, password)
-  - `UserInDB`: Schema for user in database (includes hashed password)
+### 2.2 Firestore Service (`app/services/firestore.py`)
 
-### 2.4 API Routes (`app/routers/users.py`)
-- CRUD operations for users:
-  - `GET /users`: List all users (protected)
-  - `GET /users/{user_id}`: Get a specific user (protected)
-  - `POST /users`: Create a new user
-  - `PUT /users/{user_id}`: Update a user (protected)
-  - `DELETE /users/{user_id}`: Delete a user (protected)
-
-### 2.5 Authentication Routes (`app/routers/auth.py`)
-- `POST /auth/register`: Register a new user
-- `POST /auth/login`: Login and get access token
-- `GET /auth/me`: Get current user information
-
-### 2.6 Firestore Service (`app/services/firestore.py`)
-- Firestore client initialization
-- Collection management
-- CRUD operations for user documents
-- Error handling for database operations
+- Initializes and provides a Firestore client, supporting both production and emulator environments.
+- Contains functions for:
+    - Saving a new email to the "emails" collection (`save_email`).
+    - Checking if an email already exists in the "emails" collection (`email_exists`).
+    - Retrieving all documents from the "emails" collection (`get_emails`).
+- Includes basic error handling for database operations.
 
 ## 3. Docker Configuration
 
 ### 3.1 Dockerfile
-- Multi-stage build for optimized container size
-- Python 3.9+ base image
-- Proper dependency installation
-- Non-root user for security
-- Health check configuration
+
+- Defines the steps to build a Docker image for the FastAPI application.
+- Copies application code and dependencies.
+- Sets up the necessary environment to run the FastAPI application.
 
 ### 3.2 Docker Compose (for local development)
-- FastAPI service configuration
-- Firestore emulator for local testing
-- Volume mapping for code changes
-- Environment variable configuration
+
+- Configures the FastAPI service.
+- Can be extended to include a Firestore emulator for local testing.
+- Maps volumes for local code changes to be reflected in the container.
 
 ## 4. Terraform Infrastructure as Code
 
 ### 4.1 Main Configuration (`iac/terraform/main.tf`)
-- Google provider configuration
-- Cloud Run service
-- Firestore database
-- IAM permissions
-- Networking configuration
-- Secret Manager for JWT secret key
+
+- Configures the Google Cloud provider.
+- Enables necessary GCP APIs (Cloud Run, Artifact Registry, Firestore, Secret Manager).
+- Creates a Firestore database instance.
+- Defines and configures the Google Cloud Run service for deploying the application container.
+- Grants the Cloud Run service account necessary permissions (e.g., Firestore access).
 
 ### 4.2 Variables (`iac/terraform/variables.tf`)
-- Project ID
-- Region
-- Service name
-- Container image
-- Environment variables
-- JWT configuration
+
+- Defines input variables for the Terraform configuration, such as:
+    - GCP project ID and region.
+    - Firestore location.
+    - Cloud Run service name and container image.
+    - Service account email.
+    - Firestore collection name (defaults to "users", but used for "emails" in the application).
 
 ### 4.3 Outputs (`iac/terraform/outputs.tf`)
-- Cloud Run service URL
-- Firestore database details
+
+- Defines output values from the Terraform deployment, such as the Cloud Run service URL.
 
 ### 4.4 Backend Configuration (`iac/terraform/backend.tf`)
-- GCS bucket for Terraform state
-- State locking mechanism
+
+- Configures the backend for storing Terraform state (e.g., in a GCS bucket).
 
 ## 5. CI/CD Pipeline with GitHub Actions
 
 ### 5.1 Workflow Configuration (`.github/workflows/ci-cd.yml`)
-- Trigger on push to main branch and pull requests
-- Environment setup
-- Testing stage (including authentication tests)
-- Docker build and push to Artifact Registry
-- Terraform validation and planning
-- Infrastructure deployment
-- Application deployment to Cloud Run
-- Post-deployment verification
 
-### 5.2 Pipeline Stages
-1. **Setup**: Configure GCP authentication and environment
-2. **Test**: Run unit and integration tests (including auth tests)
-3. **Build**: Build and tag Docker image
-4. **Push**: Push image to Artifact Registry
-5. **Plan**: Run Terraform plan to validate changes
-6. **Apply**: Apply Terraform changes to provision/update infrastructure
-7. **Deploy**: Deploy application to Cloud Run
-8. **Verify**: Run health checks and auth tests to verify deployment
+- Defines the automated workflow triggered by events like pushes to the main branch.
+- Includes jobs for:
+    - Running application tests.
+    - Building and pushing the Docker image to Google Cloud Artifact Registry.
+    - Validating and applying the Terraform configuration to provision/update infrastructure.
+    - Deploying the new container image to the Cloud Run service.
 
-## 6. Testing Strategy
+## 6. Data Storage
 
-### 6.1 Unit Tests
-- Test API endpoints with mocked Firestore service
-- Test data models and validation
-- Test error handling
-- Test authentication and token generation/validation
+- **Firestore**: Used as the primary database to store collected emails in a collection named "emails".
 
-### 6.2 Integration Tests
-- Test API endpoints with Firestore emulator
-- Test database operations
-- Test authentication flows
+## 7. Deployment
 
-### 6.3 End-to-End Tests
-- Test complete user flows including authentication
-- Verify deployment in CI/CD pipeline
+- The application is deployed as a containerized service on Google Cloud Run, managed by Terraform.
 
-## 7. Monitoring and Logging
+## 8. Local Development Environment
 
-### 7.1 Application Logging
-- Structured JSON logging
-- Log levels (DEBUG, INFO, WARNING, ERROR)
-- Request/response logging middleware
+- Docker Compose can be used to run the application and potentially a Firestore emulator locally for development and testing.
 
-### 7.2 Cloud Run Monitoring
-- CPU and memory utilization
-- Request count and latency
-- Error rate
+## 9. API Endpoints
 
-### 7.3 Firestore Monitoring
-- Read/write operations
-- Storage usage
-- Query performance
-
-## 8. Implementation Plan
-
-### Phase 1: Local Development Setup
-1. Create FastAPI application structure
-2. Implement user models and API routes
-3. Set up Firestore service with local emulator
-4. Create Dockerfile and docker-compose.yml
-5. Implement basic tests
-
-### Phase 2: Authentication Implementation
-1. Add JWT-based authentication components
-2. Implement user registration and login endpoints
-3. Add password hashing and verification
-4. Implement token generation and validation
-5. Add authentication middleware to protect routes
-6. Update user model to include password field
-7. Add tests for authentication flows
-
-### Phase 3: Infrastructure as Code
-1. Create Terraform configuration for Cloud Run
-2. Configure Firestore database in Terraform
-3. Set up IAM permissions and networking
-4. Configure Secret Manager for JWT secret
-5. Configure Terraform backend with GCS bucket
-
-### Phase 4: CI/CD Pipeline
-1. Create GitHub Actions workflow
-2. Configure GCP authentication in GitHub
-3. Set up testing, building, and deployment stages
-4. Implement verification steps including auth tests
-
-### Phase 5: Deployment and Testing
-1. Push code to GitHub repository
-2. Verify CI/CD pipeline execution
-3. Test deployed application including authentication
-4. Document API endpoints and usage
-
-## 9. Authentication Flow Diagram
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API as FastAPI Service
-    participant Auth as Auth Service
-    participant DB as Firestore
-    
-    %% Registration Flow
-    Client->>API: POST /auth/register (name, email, password)
-    API->>Auth: Hash password
-    Auth->>API: Hashed password
-    API->>DB: Store user with hashed password
-    DB->>API: User created
-    API->>Client: User created response
-    
-    %% Login Flow
-    Client->>API: POST /auth/login (email, password)
-    API->>DB: Get user by email
-    DB->>API: User data with hashed password
-    API->>Auth: Verify password
-    Auth->>API: Password verified
-    API->>Auth: Generate JWT token
-    Auth->>API: Access token
-    API->>Client: JWT access token
-    
-    %% Protected Endpoint Flow
-    Client->>API: GET /users (with Authorization header)
-    API->>Auth: Validate JWT token
-    Auth->>API: Token validated, user info
-    API->>DB: Get users
-    DB->>API: Users data
-    API->>Client: Users list response
-```
+- `GET /`: Serves the main HTML page.
+- `POST /write_test_data`: Writes a test document to Firestore.
+- `GET /read_test_data`: Reads the test document from Firestore.
+- `POST /save_email`: Receives an email and saves it to Firestore.
+- `GET /emails`: Retrieves all saved emails from Firestore.
 
 ## 10. Architecture Diagram
 
@@ -268,7 +132,7 @@ graph TD
     subgraph "GitHub Repository"
         A[Source Code] --> B[GitHub Actions]
     end
-    
+
     subgraph "CI/CD Pipeline"
         B --> C[Test]
         C --> D[Build Docker Image]
@@ -276,7 +140,7 @@ graph TD
         E --> F[Terraform Apply]
         F --> G[Deploy to Cloud Run]
     end
-    
+
     subgraph "Google Cloud Platform"
         G --> H[Cloud Run Service]
         H --> I[Firestore Database]
@@ -284,26 +148,8 @@ graph TD
         J --> I
         K[Artifact Registry] --> H
         L[Cloud Storage] --> M[Terraform State]
-        N[Secret Manager] --> H
     end
-    
-    subgraph "Monitoring & Logging"
-        H --> O[Cloud Logging]
-        I --> O
-        O --> P[Cloud Monitoring]
-    end
-    
+
     subgraph "Client Applications"
-        Q[API Clients] --> H
+        Q[Web Browser/API Clients] --> H
     end
-```
-
-## 11. Security Considerations
-
-1. **Password Security**: Secure password hashing with bcrypt
-2. **JWT Security**: Proper token expiration and signature verification
-3. **Service Account Permissions**: Least privilege principle for service accounts
-4. **Secrets Management**: Secure handling of JWT secret and service account keys
-5. **Network Security**: Private Cloud Run services with IAM-based access
-6. **Container Security**: Non-root user in Docker, minimal base image
-7. **Firestore Security Rules**: Proper rules for data access based on authentication

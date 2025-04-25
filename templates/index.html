@@ -9,32 +9,51 @@
 </head>
 
 <body>
-    <h1>Ethics Statement</h1>
-    <p>This research project adheres to strict ethical guidelines to protect participant privacy and data integrity:</p>
-    <ul>
-        <li><strong>Personal Identifiable Information (PII) Protection:</strong> The final dataset will not contain any
-            PII that will be made public.</li>
-        <li><strong>Email Data Usage:</strong> Participant emails will be stored in a separate, secure database. They
-            will be collected and used exclusively for the purpose of distributing vouchers to eligible participants.
-        </li>
-        <li><strong>Data Retention:</strong> Upon conclusion of the experiment, all email data will be permanently
-            erased from our systems.</li>
-        <li><strong>Data Removal Rights:</strong> If you wish to have your email data removed from our records at any
-            point during the study, please contact jack.contro@kcl.ac.uk with your request.</li>
-        <li><strong>Data Security:</strong> We employ robust security measures to protect all collected data throughout
-            the duration of the study.</li>
-        <li><strong>Voluntary Participation:</strong> Your participation in this study is entirely voluntary, and you
-            may withdraw at any time without penalty.</li>
-    </ul>
-    <p>By participating in this study, you acknowledge that you have read and understood this ethics statement. If you
-        have any questions or concerns about the ethical aspects of this research, please contact the principal
-        investigator at the email address provided above.</p>
+    <div>
+        <h1>Ethics Statement</h1>
+        <div class="ethics-box">
 
-    <form>
-        <label for="email">Enter Your Email</label><br>
-        <input type="email" id="email" name="email"><br><br>
-        <button type="submit">submit</button>
-    </form>
+
+            <p>This research project adheres to strict ethical guidelines to protect participant privacy
+                and data integrity:
+            </p>
+            <ul>
+                <li><strong>Personal Identifiable Information (PII) Protection:</strong> The final dataset will not
+                    contain
+                    any
+                    PII that will be made public.</li>
+                <li><strong>Email Data Usage:</strong> Participant emails will be stored in a separate, secure database.
+                    They
+                    will be collected and used exclusively for the purpose of distributing vouchers to eligible
+                    participants.
+                </li>
+                <li><strong>Data Retention:</strong> Upon conclusion of the experiment, all email data will be
+                    permanently
+                    erased from our systems.</li>
+                <li><strong>Data Removal Rights:</strong> If you wish to have your email data removed from our records
+                    at
+                    any
+                    point during the study, please contact jack.contro@kcl.ac.uk with your request.</li>
+                <li><strong>Data Security:</strong> We employ robust security measures to protect all collected data
+                    throughout
+                    the duration of the study.</li>
+                <li><strong>Voluntary Participation:</strong> Your participation in this study is entirely voluntary,
+                    and
+                    you
+                    may withdraw at any time without penalty.</li>
+            </ul>
+            <p>By participating in this study, you acknowledge that you have read and understood this ethics statement.
+                If
+                you
+                have any questions or concerns about the ethical aspects of this research, please contact the principal
+                investigator at the email address provided above.</p>
+        </div>
+        <form>
+            <label for="email">Enter Your Email</label><br>
+            <input type="email" id="email" name="email"><br><br>
+            <button type="submit">submit</button>
+        </form>
+    </div>
     <script src="{{ url_for('static', path='/js/script.js') }}"></script>
 </body>
 
