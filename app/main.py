@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users
 import datetime
 
 app = FastAPI()
@@ -13,13 +13,27 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    # Custom url_for to force HTTPS for static files
-    def url_for_https(name: str, **path_params: any) -> str:
-        if name == "static":
-            return str(request.url_for(name, **path_params).replace(scheme="https"))
-        return str(request.url_for(name, **path_params))
+    return templates.TemplateResponse("index.html", {"request": request})
+@app.get("/signup", response_class=HTMLResponse)
+async def signup(request: Request):
+    return templates.TemplateResponse("survey.html", {"request": request})
+from fastapi import Form, Depends
+from app.services.firestore import save_user_and_survey
 
-    return templates.TemplateResponse("index.html", {"request": request, "url_for": url_for_https})
+@app.post("/submit_survey")
+async def submit_survey(
+    username: str = Form(...),
+    age: int = Form(None),
+    gender: str = Form(None),
+    education: str = Form(None)
+):
+    survey_data = {
+        "age": age,
+        "gender": gender,
+        "education": education
+    }
+    result = save_user_and_survey(username, survey_data)
+    return result
 
 @app.post("/write_test_data")
 async def write_test_data():
@@ -65,7 +79,19 @@ async def read_emails():
     result = get_emails()
     return result
 
+@app.get("/users")
+async def read_users():
+    """Retrieves all saved users from Firestore."""
+    result = get_users()
+    return result
+
 @app.get("/healthcheck")
 async def healthcheck():
     """Healthcheck endpoint to check if the application is running."""
     return {"status": "ok"}
+
+from fastapi.responses import FileResponse
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/favicon.ico")

@@ -1,144 +1,144 @@
 document.addEventListener("DOMContentLoaded", function () {
   // Tab switching functionality
-  const loginTab = document.getElementById("login-tab");
-  const registerTab = document.getElementById("register-tab");
-  const loginForm = document.getElementById("login-form");
-  const registerForm = document.getElementById("register-form");
+  // const loginTab = document.getElementById("login-tab");
+  // const registerTab = document.getElementById("register-tab");
+  // const loginForm = document.getElementById("login-form");
+  // const registerForm = document.getElementById("register-form");
 
-  loginTab.addEventListener("click", function () {
-    loginTab.classList.add("active");
-    registerTab.classList.remove("active");
-    loginForm.classList.add("active");
-    registerForm.classList.remove("active");
-  });
+  // loginTab.addEventListener("click", function () {
+  //   loginTab.classList.add("active");
+  //   registerTab.classList.remove("active");
+  //   loginForm.classList.add("active");
+  //   registerForm.classList.remove("active");
+  // });
 
-  registerTab.addEventListener("click", function () {
-    registerTab.classList.add("active");
-    loginTab.classList.remove("active");
-    registerForm.classList.add("active");
-    loginForm.classList.remove("active");
-  });
+  // registerTab.addEventListener("click", function () {
+  //   registerTab.classList.add("active");
+  //   loginTab.classList.remove("active");
+  //   registerForm.classList.add("active");
+  //   loginForm.classList.remove("active");
+  // });
 
-  // Form validation
-  const loginFormElement = document.getElementById("login");
-  const registerFormElement = document.getElementById("register");
+  // // Form validation
+  // const loginFormElement = document.getElementById("login");
+  // const registerFormElement = document.getElementById("register");
 
-  // Login form validation
-  loginFormElement.addEventListener("submit", function (e) {
-    e.preventDefault();
+  // // Login form validation
+  // loginFormElement.addEventListener("submit", function (e) {
+  //   e.preventDefault();
 
-    // Reset error messages
-    clearErrors("login");
+  //   // Reset error messages
+  //   clearErrors("login");
 
-    const email = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value;
-    let isValid = true;
+  //   const email = document.getElementById("login-email").value.trim();
+  //   const password = document.getElementById("login-password").value;
+  //   let isValid = true;
 
-    // Email validation
-    if (!email) {
-      showError("login-email", "Email is required");
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      showError("login-email", "Please enter a valid email address");
-      isValid = false;
-    }
+  //   // Email validation
+  //   if (!email) {
+  //     showError("login-email", "Email is required");
+  //     isValid = false;
+  //   } else if (!isValidEmail(email)) {
+  //     showError("login-email", "Please enter a valid email address");
+  //     isValid = false;
+  //   }
 
-    // Password validation
-    if (!password) {
-      showError("login-password", "Password is required");
-      isValid = false;
-    }
+  //   // Password validation
+  //   if (!password) {
+  //     showError("login-password", "Password is required");
+  //     isValid = false;
+  //   }
 
-    if (isValid) {
-      // Simulate login process
-      simulateLoginProcess(email, password);
-    }
-  });
+  //   if (isValid) {
+  //     // Simulate login process
+  //     simulateLoginProcess(email, password);
+  //   }
+  // });
 
-  // Registration form validation
-  registerFormElement.addEventListener("submit", function (e) {
-    e.preventDefault();
+  // // Registration form validation
+  // registerFormElement.addEventListener("submit", function (e) {
+  //   e.preventDefault();
 
-    // Reset error messages
-    clearErrors("register");
+  //   // Reset error messages
+  //   clearErrors("register");
 
-    const name = document.getElementById("register-name").value.trim();
-    const email = document.getElementById("register-email").value.trim();
-    const password = document.getElementById("register-password").value;
-    const confirmPassword = document.getElementById(
-      "register-confirm-password"
-    ).value;
-    let isValid = true;
+  //   const name = document.getElementById("register-name").value.trim();
+  //   const email = document.getElementById("register-email").value.trim();
+  //   const password = document.getElementById("register-password").value;
+  //   const confirmPassword = document.getElementById(
+  //     "register-confirm-password"
+  //   ).value;
+  //   let isValid = true;
 
-    // Name validation
-    if (!name) {
-      showError("register-name", "Name is required");
-      isValid = false;
-    }
+  //   // Name validation
+  //   if (!name) {
+  //     showError("register-name", "Name is required");
+  //     isValid = false;
+  //   }
 
-    // Email validation
-    if (!email) {
-      showError("register-email", "Email is required");
-      isValid = false;
-    } else if (!isValidEmail(email)) {
-      showError("register-email", "Please enter a valid email address");
-      isValid = false;
-    }
+  //   // Email validation
+  //   if (!email) {
+  //     showError("register-email", "Email is required");
+  //     isValid = false;
+  //   } else if (!isValidEmail(email)) {
+  //     showError("register-email", "Please enter a valid email address");
+  //     isValid = false;
+  //   }
 
-    // Password validation
-    if (!password) {
-      showError("register-password", "Password is required");
-      isValid = false;
-    } else if (password.length < 8) {
-      showError(
-        "register-password",
-        "Password must be at least 8 characters long"
-      );
-      isValid = false;
-    }
+  //   // Password validation
+  //   if (!password) {
+  //     showError("register-password", "Password is required");
+  //     isValid = false;
+  //   } else if (password.length < 8) {
+  //     showError(
+  //       "register-password",
+  //       "Password must be at least 8 characters long"
+  //     );
+  //     isValid = false;
+  //   }
 
-    // Confirm password validation
-    if (!confirmPassword) {
-      showError("register-confirm-password", "Please confirm your password");
-      isValid = false;
-    } else if (password !== confirmPassword) {
-      showError("register-confirm-password", "Passwords do not match");
-      isValid = false;
-    }
+  //   // Confirm password validation
+  //   if (!confirmPassword) {
+  //     showError("register-confirm-password", "Please confirm your password");
+  //     isValid = false;
+  //   } else if (password !== confirmPassword) {
+  //     showError("register-confirm-password", "Passwords do not match");
+  //     isValid = false;
+  //   }
 
-    if (isValid) {
-      // Simulate registration process
-      simulateRegistrationProcess(name, email, password);
-    }
-  });
+  //   if (isValid) {
+  //     // Simulate registration process
+  //     simulateRegistrationProcess(name, email, password);
+  //   }
+  // });
 
-  // Start survey button
-  const startSurveyBtn = document.getElementById("start-survey-btn");
-  startSurveyBtn.addEventListener("click", function () {
-    // Check if user is logged in (for demo purposes, we'll just show a message)
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  // // Start survey button
+  // const startSurveyBtn = document.getElementById("start-survey-btn");
+  // startSurveyBtn.addEventListener("click", function () {
+  //   // Check if user is logged in (for demo purposes, we'll just show a message)
+  //   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
-    if (isLoggedIn) {
-      // Redirect to survey page (would be implemented in a real app)
-      window.location.href = "#survey-page"; // Placeholder for demo
-      showMessage("login", "Redirecting to survey...", "success");
-    } else {
-      // Show message to login first
-      showMessage("login", "Please login to start the survey", "error");
-      // Scroll to login form
-      loginForm.scrollIntoView({ behavior: "smooth" });
-    }
-  });
+  //   if (isLoggedIn) {
+  //     // Redirect to survey page (would be implemented in a real app)
+  //     window.location.href = "#survey-page"; // Placeholder for demo
+  //     showMessage("login", "Redirecting to survey...", "success");
+  //   } else {
+  //     // Show message to login first
+  //     showMessage("login", "Please login to start the survey", "error");
+  //     // Scroll to login form
+  //     loginForm.scrollIntoView({ behavior: "smooth" });
+  //   }
+  // });
 
-  // Remember me functionality
-  const rememberMeCheckbox = document.getElementById("remember-me");
+  // // Remember me functionality
+  // const rememberMeCheckbox = document.getElementById("remember-me");
 
-  // Check if there are saved credentials
-  if (localStorage.getItem("rememberedEmail")) {
-    document.getElementById("login-email").value =
-      localStorage.getItem("rememberedEmail");
-    rememberMeCheckbox.checked = true;
-  }
+  // // Check if there are saved credentials
+  // if (localStorage.getItem("rememberedEmail")) {
+  //   document.getElementById("login-email").value =
+  //     localStorage.getItem("rememberedEmail");
+  //   rememberMeCheckbox.checked = true;
+  // }
 
   // Helper functions
   function isValidEmail(email) {

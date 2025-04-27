@@ -59,6 +59,35 @@ def get_emails():
     except Exception as e:
         print(f"Error retrieving emails from Firestore: {e}")
         return {"status": "error", "message": str(e)}
+def save_user_and_survey(username: str, survey_data: dict):
+    """Saves user and survey data to the 'users' collection in Firestore."""
+    try:
+        users_collection = db.collection("users")
+        user_doc_ref = users_collection.document(username) # Use username as document ID
+        user_doc_ref.set({
+            "username": username,
+            "survey_data": survey_data,
+            "timestamp": firestore.SERVER_TIMESTAMP # Use server timestamp
+        })
+        print(f"User '{username}' and survey data saved to Firestore")
+        return {"status": "success", "message": "User and survey data saved successfully"}
+    except Exception as e:
+        print(f"Error saving user and survey data to Firestore: {e}")
+def get_users():
+    """Retrieves all users from the 'users' collection in Firestore."""
+    try:
+        users_collection = db.collection("users")
+        docs = users_collection.stream()
+        users_list = []
+        for doc in docs:
+            user_data = doc.to_dict()
+            users_list.append(user_data)
+        print(f"Retrieved {len(users_list)} users from Firestore")
+        return {"status": "success", "data": users_list}
+    except Exception as e:
+        print(f"Error retrieving users from Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": str(e)}
 
 # Initialize client when the module is imported
 db = get_firestore_client()
