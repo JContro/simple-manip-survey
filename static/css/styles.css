@@ -359,3 +359,18 @@ button[type="submit"]:hover {
     margin-right: auto;
     border: 1px solid #dcdcdc;
 }
+.signup-link-box {
+    border: 1px solid #007bff; /* Blue border */
+    padding: 10px 15px; /* Add some padding */
+    display: inline-block; /* Make it a block element to contain the border and padding */
+    margin-top: 20px; /* Add some space above the box */
+    border-radius: 5px; /* Rounded corners */
+    text-decoration: none; /* Remove underline from link */
+    color: #007bff; /* Link color */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+}
+
+.signup-link-box:hover {
+    background-color: #007bff; /* Blue background on hover */
+    color: white; /* White text on hover */
+}

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists
 import datetime
 
 app = FastAPI()
@@ -72,6 +72,19 @@ async def save_email_endpoint(email_data: EmailData):
     else:
         result = save_email(email_data.email)
         return result
+
+class UsernameData(BaseModel):
+    username: str
+
+@app.post("/check_username")
+async def check_username_endpoint(username_data: UsernameData):
+    """Receives a username and checks if it exists in Firestore."""
+    if username_exists(username_data.username):
+        print(f"Username '{username_data.username}' exists.")
+        return {"status": "success"}
+    else:
+        print(f"Username '{username_data.username}' does not exist.")
+        return {"status": "failure"}
 
 @app.get("/emails")
 async def read_emails():

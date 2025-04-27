@@ -46,6 +46,18 @@ def email_exists(email: str) -> bool:
         # A more robust solution might handle this error differently.
         return False
 
+def username_exists(username: str) -> bool:
+    """Checks if a username already exists in the 'users' collection."""
+    try:
+        users_collection = db.collection("users")
+        user_doc = users_collection.document(username).get()
+        return user_doc.exists
+    except Exception as e:
+        print(f"Error checking for existing username in Firestore: {e}")
+        # Assuming an error means we can't confirm existence,
+        # treat as not existing to avoid blocking operations on error.
+        return False
+
 def get_emails():
     """Retrieves all emails from the 'emails' collection in Firestore."""
     try:

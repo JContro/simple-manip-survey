@@ -222,39 +222,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 1500);
   }
 
-  // Handle email form submission on index.html
-  const emailForm = document.querySelector("form");
-  if (emailForm) {
-    emailForm.addEventListener("submit", function (e) {
+  // Handle username form submission on index.html
+  const usernameForm = document.querySelector("form");
+  if (usernameForm) {
+    usernameForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      const emailInput = document.getElementById("email");
-      if (emailInput && emailInput.value) {
-        const email = emailInput.value;
+      const usernameInput = document.getElementById("username");
+      if (usernameInput && usernameInput.value) {
+        const username = usernameInput.value;
 
-        // Save to local storage
-        localStorage.setItem("userEmail", email);
-        console.log("Email saved to local storage:", email);
-
-        // Send to backend API
-        fetch("/save_email", {
+        // Send to backend API to check username
+        fetch("/check_username", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ email: email }),
+          body: JSON.stringify({ username: username }),
         })
           .then((response) => response.json())
           .then((data) => {
             console.log("Backend response:", data);
             if (data.status === "success") {
-              alert("Email saved successfully!");
+              console.log("success");
             } else {
-              alert("Error saving email: " + data.message);
+              console.log("failure");
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            alert("An error occurred while saving the email.");
+            console.log("An error occurred while checking the username.");
           });
       }
     });
