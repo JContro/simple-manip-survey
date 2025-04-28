@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const progressBar = document.getElementById("progress-bar");
   const progressText = document.getElementById("progress-text");
   const nextButton = document.getElementById("next-button");
+  const backButton = document.getElementById("back-button"); // Get the back button
 
   let conversations = []; // Array to hold all conversations for the batch
   let currentConversationIndex = 0;
@@ -23,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } of ${totalConversationsInBatch} (Batch ${currentBatch})`;
   }
 
-  // Function to display a conversation
+  // Function to display a conversation with formatted turns
   function displayConversation(conversation) {
     conversationContainer.innerHTML = ""; // Clear previous conversation
 
@@ -31,18 +32,63 @@ document.addEventListener("DOMContentLoaded", function () {
     conversationElement.classList.add("conversation"); // Add a class for styling
 
     const titleElement = document.createElement("h3");
-    titleElement.textContent = conversation.title;
-
-    const contentElement = document.createElement("div"); // Use a div for potentially complex content
-    // Displaying cleaned_conversation as an example, format as needed
-    contentElement.innerHTML =
-      "<pre>" +
-      JSON.stringify(conversation.cleaned_conversation, null, 2) +
-      "</pre>";
-
+    // Use conversation.uuid and conversation.title
+    titleElement.textContent = `Conversation ID: ${conversation.uuid} - ${conversation.title}`;
     conversationElement.appendChild(titleElement);
-    conversationElement.appendChild(contentElement);
+
+    // Check if cleaned_conversation exists and is an array
+    if (
+      conversation.cleaned_conversation &&
+      Array.isArray(conversation.cleaned_conversation)
+    ) {
+      conversation.cleaned_conversation.forEach((turn) => {
+        const turnElement = document.createElement("div");
+        turnElement.classList.add("turn"); // General class for a turn
+
+        // Add speaker-specific class based on 'role'
+        if (turn.role) {
+          turnElement.classList.add(
+            `${turn.role.toLowerCase().replace(" ", "-")}-turn`
+          );
+        }
+
+        const speakerElement = document.createElement("strong");
+        // Use turn.role for speaker
+        speakerElement.textContent = `${turn.role || "Unknown"}: `; // Handle potential missing role
+
+        const textElement = document.createElement("span");
+        // Use turn.content for text
+        textElement.textContent = turn.content || ""; // Handle potential missing content
+
+        turnElement.appendChild(speakerElement);
+        turnElement.appendChild(textElement);
+        conversationElement.appendChild(turnElement);
+      });
+    } else {
+      // Fallback if cleaned_conversation is not in the expected format
+      const errorElement = document.createElement("p");
+      errorElement.textContent =
+        "Conversation data is not in the expected format.";
+      errorElement.style.color = "red";
+      conversationElement.appendChild(errorElement);
+      console.error("Invalid conversation data:", conversation);
+    }
+
     conversationContainer.appendChild(conversationElement);
+
+    // Update button visibility
+    backButton.style.display =
+      currentConversationIndex > 0 ? "inline-block" : "none";
+    nextButton.style.display =
+      currentConversationIndex < totalConversationsInBatch - 1
+        ? "inline-block"
+        : "none";
+
+    // Handle case where it's the last conversation
+    if (currentConversationIndex >= totalConversationsInBatch - 1) {
+      nextButton.style.display = "none"; // Hide next button explicitly
+      // Optionally show a 'Finish' or 'Submit' button here
+    }
   }
 
   // Function to display the next conversation
@@ -52,13 +98,32 @@ document.addEventListener("DOMContentLoaded", function () {
     if (currentConversationIndex < totalConversationsInBatch) {
       displayConversation(conversations[currentConversationIndex]);
       updateProgressBar();
+      // Show back button if not the first conversation
+      backButton.style.display = "inline-block";
     } else {
-      // End of survey
+      // End of survey - adjust index back if over limit
+      currentConversationIndex = totalConversationsInBatch - 1;
       conversationContainer.innerHTML =
         "<p>You have completed this batch of the survey. Thank you!</p>";
       nextButton.style.display = "none"; // Hide the next button
+      backButton.style.display =
+        totalConversationsInBatch > 1 ? "inline-block" : "none"; // Show back if there was more than one convo
       progressText.textContent = `Batch ${currentBatch} Completed!`;
       progressBar.style.width = "100%";
+    }
+  }
+
+  // Function to display the previous conversation
+  function displayPreviousConversation() {
+    if (currentConversationIndex > 0) {
+      currentConversationIndex--;
+      displayConversation(conversations[currentConversationIndex]);
+      updateProgressBar();
+      // Hide back button if now on the first conversation
+      backButton.style.display =
+        currentConversationIndex === 0 ? "none" : "inline-block";
+      // Ensure next button is visible if not on the last conversation
+      nextButton.style.display = "inline-block";
     }
   }
 
@@ -77,12 +142,17 @@ document.addEventListener("DOMContentLoaded", function () {
         displayConversation(conversations[currentConversationIndex]);
         updateProgressBar();
 
-        // Add event listener to the next button
+        // Add event listeners
         nextButton.addEventListener("click", displayNextConversation);
+        backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
+
+        // Initially hide back button
+        backButton.style.display = "none";
       } else {
         conversationContainer.innerHTML =
           "<p>No conversations found for this batch.</p>";
         nextButton.style.display = "none";
+        backButton.style.display = "none"; // Also hide back button if no conversations
         progressText.textContent = `Batch ${currentBatch}`;
         progressBar.style.width = "0%";
       }
