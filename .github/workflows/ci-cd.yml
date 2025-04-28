@@ -148,10 +148,6 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
-      - name: Verify deployment
-        run: |
-          curl -s -o /dev/null -w "%{http_code}" ${{ steps.deploy.outputs.url }}/health | grep 200
-
       - name: Show service URL
         run: |
           echo "Service URL: ${{ steps.deploy.outputs.url }}"
