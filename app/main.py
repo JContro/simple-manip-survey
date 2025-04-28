@@ -146,13 +146,15 @@ async def read_survey(request: Request, username: str):
     # This logic needs to be implemented in firestore.py and potentially handle batch assignment strategy
     # For now, let's assume assign_batch_to_user handles this and returns the assigned batch number
     # Modify assign_batch_to_user to handle assignment if needed
-    # Assign a batch to the user if they don't have one and get the assigned batch
-    assigned_batch_result = assign_batch_to_user(username)
-    assigned_batch = assigned_batch_result.get("batch")
+    # Check if the user has an assigned batch
+    user_batch_result = get_user_batch(username)
+    assigned_batch = user_batch_result.get("batch")
 
     if not assigned_batch:
-        # Handle case where batch assignment failed or no batches available
-        return templates.TemplateResponse("error.html", {"request": request, "message": "Could not assign a batch."})
+        # If no batch is assigned, we cannot proceed to get conversations.
+        # The logic for assigning a new batch needs to be implemented.
+        # For now, return an error message.
+        return templates.TemplateResponse("error.html", {"request": request, "message": f"No batch assigned to user '{username}'. Batch assignment logic is not yet implemented."})
 
     # Get conversations for the assigned batch
     conversations_result = get_conversations(batch=assigned_batch)

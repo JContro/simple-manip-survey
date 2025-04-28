@@ -253,45 +253,19 @@ def get_user_batch(username: str):
         return {"status": "error", "message": str(e)}
 
 
-def assign_batch_to_user(username: str):
-    """Assigns a batch number to a user if they don't have one."""
+def assign_batch_to_user(username: str, batch: int):
+    """Assigns a batch to user - adds to the list."""
     try:
         users_collection = db.collection("users")
         user_doc_ref = users_collection.document(username)
 
-        @firestore.transactional
-        def update_user_in_transaction(transaction, user_ref):
-            user_doc = user_ref.get(transaction=transaction)
-            if user_doc.exists:
-                user_data = user_doc.to_dict()
-                assigned_batches = user_data.get("batches", [])
-                if not assigned_batches:
-                    # Assign a default batch (e.g., batch 1) if no batch is assigned
-                    # In a real application, you'd have logic to determine the next batch to assign
-                    batch_to_assign = 1
-                    transaction.update(
-                        user_ref, {"batches": [batch_to_assign]})
-                    print(
-                        f"Batch {batch_to_assign} assigned to existing user '{username}'")
-                    return {"status": "success", "batch": batch_to_assign, "message": f"Batch {batch_to_assign} assigned to user {username}"}
-                else:
-                    # User already has a batch assigned, return the first one
-                    print(f"User '{username}' already has batch(es) assigned.")
-                    return {"status": "info", "batch": assigned_batches[0], "message": f"User {username} already has batch {assigned_batches[0]} assigned"}
-            else:
-                # Create new user document and assign a default batch
-                batch_to_assign = 1
-                transaction.set(user_ref, {
-                    "username": username,
-                    "batches": [batch_to_assign],
-                    "timestamp": firestore.SERVER_TIMESTAMP
-                })
-                print(
-                    f"New user '{username}' created and batch {batch_to_assign} assigned")
-                return {"status": "success", "batch": batch_to_assign, "message": f"New user {username} created and batch {batch_to_assign} assigned"}
+        # Use arrayUnion to add the batch to the 'batches' array
+        user_doc_ref.update({
+            "batches": firestore.ArrayUnion([batch])
+        })
 
-        transaction = db.transaction()
-        return update_user_in_transaction(transaction, user_doc_ref)
+        print(f"Batch {batch} assigned to user '{username}'")
+        return {"status": "success", "message": f"Batch {batch} assigned to user '{username}'"}
 
     except Exception as e:
         print(f"Error assigning batch to user '{username}': {e}")

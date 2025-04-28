@@ -95,6 +95,20 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayNextConversation() {
     currentConversationIndex++;
 
+    // Reset survey selections
+    const surveyQuestionsDiv = document.getElementById("survey-questions");
+    if (surveyQuestionsDiv) {
+      const radioButtons = surveyQuestionsDiv.querySelectorAll(
+        'input[type="radio"]'
+      );
+      radioButtons.forEach((radio) => {
+        radio.checked = false;
+      });
+    }
+
+    // Scroll to the top of the page
+    window.scrollTo(0, 0);
+
     if (currentConversationIndex < totalConversationsInBatch) {
       displayConversation(conversations[currentConversationIndex]);
       updateProgressBar();
