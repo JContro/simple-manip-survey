@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations
 import datetime
 
 app = FastAPI()
@@ -59,6 +59,30 @@ async def read_test_data():
         return {"status": "error", "message": str(e)}
 
 from pydantic import BaseModel
+from typing import List, Dict, Any, Optional
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class Conversation(BaseModel):
+    uuid: str
+    title: str
+    model: str
+    context: str
+    option: str
+    prompt_type: str
+    prompt: str
+    manipulation_type: Optional[str] = None
+    manipulation_description: Optional[str] = None
+    chat_completion: str
+    processing_time: float
+    timestamp: int
+    error: Optional[str] = None
+    persuasion_strength: Optional[str] = None
+    generated_text: Optional[str] = None
+    cleaned_conversation: List[Message]
+    batch: int
 
 class EmailData(BaseModel):
     email: str
@@ -102,6 +126,23 @@ async def read_users():
 async def healthcheck():
     """Healthcheck endpoint to check if the application is running."""
     return {"status": "ok"}
+@app.post("/conversations")
+async def create_conversation(conversation: Conversation):
+    """Receives a conversation and saves it to Firestore."""
+    result = save_conversation(conversation.model_dump())
+    return result
+
+@app.get("/conversations")
+async def read_conversations():
+    """Retrieves all saved conversations from Firestore."""
+    result = get_conversations()
+    return result
+
+@app.delete("/conversations")
+async def reset_conversations():
+    """Deletes all saved conversations from Firestore."""
+    result = delete_all_conversations()
+    return result
 
 from fastapi.responses import FileResponse
 

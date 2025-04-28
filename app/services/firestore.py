@@ -99,6 +99,51 @@ def get_users():
     except Exception as e:
         print(f"Error retrieving users from Firestore: {e}")
         return {"status": "error", "message": str(e)}
+
+def save_conversation(conversation_data: dict):
+    """Saves a conversation to the 'conversations' collection in Firestore."""
+    try:
+        conversations_collection = db.collection("conversations")
+        # Use the UUID from the conversation data as the document ID
+        conversation_doc_ref = conversations_collection.document(conversation_data.get("uuid"))
+        
+        # Create a new dictionary to ensure data is properly formatted for Firestore
+        data_to_save = dict(conversation_data)
+        
+        conversation_doc_ref.set(data_to_save)
+        print(f"Conversation '{conversation_data.get('uuid')}' saved to Firestore")
+        return {"status": "success", "message": "Conversation saved successfully"}
+    except Exception as e:
+        print(f"Error saving conversation to Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
+def get_conversations():
+    """Retrieves all conversations from the 'conversations' collection in Firestore."""
+    try:
+        conversations_collection = db.collection("conversations")
+        docs = conversations_collection.stream()
+        conversations_list = []
+        for doc in docs:
+            conversations_list.append(doc.to_dict())
+        print(f"Retrieved {len(conversations_list)} conversations from Firestore")
+        return {"status": "success", "data": conversations_list}
+    except Exception as e:
+        print(f"Error retrieving conversations from Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
+def delete_all_conversations():
+    """Deletes all documents in the 'conversations' collection."""
+    try:
+        conversations_collection = db.collection("conversations")
+        docs = conversations_collection.stream()
+        deleted_count = 0
+        for doc in docs:
+            doc.reference.delete()
+            deleted_count += 1
+        print(f"Deleted {deleted_count} conversations from Firestore")
+        return {"status": "success", "message": f"Deleted {deleted_count} conversations"}
+    except Exception as e:
+        print(f"Error deleting conversations from Firestore: {e}")
         return {"status": "error", "message": str(e)}
 
 # Initialize client when the module is imported
