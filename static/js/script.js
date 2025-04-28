@@ -223,39 +223,40 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Handle username form submission on index.html
-  const usernameForm = document.querySelector("form");
-  if (usernameForm) {
-    usernameForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const usernameInput = document.getElementById("username");
-      if (usernameInput && usernameInput.value) {
-        const username = usernameInput.value;
+  // Removed the JavaScript form submission handling to allow the browser to follow the redirect.
+  // const usernameForm = document.querySelector("form");
+  // if (usernameForm) {
+  //   usernameForm.addEventListener("submit", function (e) {
+  //     e.preventDefault();
+  //     const usernameInput = document.getElementById("username");
+  //     if (usernameInput && usernameInput.value) {
+  //       const username = usernameInput.value;
 
-        // Send to backend API to create user
-        fetch("/create_user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded", // Use this content type for form data
-          },
-          body: new URLSearchParams({ username: username }), // Send as form data
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Backend response:", data);
-            if (data.status === "success") {
-              console.log("User created successfully!");
-              // Optionally, redirect or show a success message to the user
-            } else {
-              console.log("User creation failed:", data.message);
-              // Optionally, show an error message to the user
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            console.log("An error occurred while creating the user.");
-            // Optionally, show an error message to the user
-          });
-      }
-    });
-  }
+  //       // Send to backend API to create user
+  //       fetch("/create_user", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/x-www-form-urlencoded", // Use this content type for form data
+  //         },
+  //         body: new URLSearchParams({ username: username }), // Send as form data
+  //       })
+  //         .then((response) => response.json())
+  //         .then((data) => {
+  //           console.log("Backend response:", data);
+  //           if (data.status === "success") {
+  //             console.log("User created successfully!");
+  //             // Optionally, redirect or show a success message to the user
+  //           } else {
+  //             console.log("User creation failed:", data.message);
+  //             // Optionally, show an error message to the user
+  //           }
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error:", error);
+  //           console.log("An error occurred while creating the user.");
+  //           // Optionally, show an error message to the user
+  //         });
+  //     }
+  //   });
+  // }
 });

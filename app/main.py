@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user
 import datetime
@@ -21,7 +21,8 @@ from app.services.firestore import save_user
 async def create_user(username: str = Form(...)):
     """Receives a username and creates a user."""
     result = save_user(username) # Assuming a new function save_user in firestore.py
-    return result
+    # Redirect to the survey page after creating the user
+    return RedirectResponse(url=f"/survey/{username}", status_code=303)
 
 @app.post("/write_test_data")
 async def write_test_data():
@@ -119,6 +120,12 @@ async def read_users():
 async def healthcheck():
     """Healthcheck endpoint to check if the application is running."""
     return {"status": "ok"}
+
+@app.get("/survey/{username}", response_class=HTMLResponse)
+async def read_survey(request: Request, username: str):
+    """Displays the survey page with the provided username."""
+    return templates.TemplateResponse("survey.html", {"request": request, "username": username})
+
 @app.post("/conversations")
 async def create_conversation(conversation: Conversation):
     """Receives a conversation and saves it to Firestore."""
