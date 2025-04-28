@@ -272,5 +272,26 @@ def assign_batch_to_user(username: str, batch: int):
         return {"status": "error", "message": str(e)}
 
 
+def save_survey_response(survey_response_data: dict):
+    """Saves a survey response to the 'survey_responses' collection in Firestore."""
+    try:
+        survey_responses_collection = db.collection("survey_responses")
+        # Auto-generate document ID for each survey response submission
+        survey_response_doc_ref = survey_responses_collection.document()
+
+        # Create a new dictionary to ensure data is properly formatted for Firestore
+        data_to_save = dict(survey_response_data)
+        # Add server timestamp
+        data_to_save["timestamp"] = firestore.SERVER_TIMESTAMP
+
+        survey_response_doc_ref.set(data_to_save)
+        print(
+            f"Survey response saved to Firestore for user '{survey_response_data.get('username')}' conversation '{survey_response_data.get('conversation_uuid')}'")
+        return {"status": "success", "message": "Survey response saved successfully"}
+    except Exception as e:
+        print(f"Error saving survey response to Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Initialize client when the module is imported
 db = get_firestore_client()

@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response
 import datetime
 
 app = FastAPI()
@@ -102,6 +102,23 @@ async def save_email_endpoint(email_data: EmailData):
     else:
         result = save_email(email_data.email)
         return result
+
+
+class SurveyResponseData(BaseModel):
+    username: str
+    conversation_uuid: str
+    manipulative_general: Optional[int] = None
+    manipulative_gaslighting: Optional[int] = None
+    manipulative_reciprocity: Optional[int] = None
+    manipulative_charming: Optional[int] = None
+    manipulative_misrepresenting: Optional[int] = None
+    manipulative_guilt_tripping: Optional[int] = None
+    manipulative_emotion_induction: Optional[int] = None
+    manipulative_peer_pressure: Optional[int] = None
+    manipulative_negging: Optional[int] = None
+    manipulative_emotional_blackmail: Optional[int] = None
+    manipulative_fear_enhancement: Optional[int] = None
+    # Add fields for highlighted text if needed later
 
 
 class UsernameData(BaseModel):
@@ -205,6 +222,13 @@ async def assign_batch_endpoint(assign_batch_data: AssignBatchData):
     """Receives a username and batch number and assigns the batch to the user."""
     result = assign_batch_to_user(
         assign_batch_data.username, assign_batch_data.batch)
+    return result
+
+
+@app.post("/submit_survey")
+async def submit_survey(survey_response_data: SurveyResponseData):
+    """Receives survey responses and saves them to Firestore."""
+    result = save_survey_response(survey_response_data.model_dump())
     return result
 
 
