@@ -231,26 +231,29 @@ document.addEventListener("DOMContentLoaded", function () {
       if (usernameInput && usernameInput.value) {
         const username = usernameInput.value;
 
-        // Send to backend API to check username
-        fetch("/check_username", {
+        // Send to backend API to create user
+        fetch("/create_user", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded", // Use this content type for form data
           },
-          body: JSON.stringify({ username: username }),
+          body: new URLSearchParams({ username: username }), // Send as form data
         })
           .then((response) => response.json())
           .then((data) => {
             console.log("Backend response:", data);
             if (data.status === "success") {
-              console.log("success");
+              console.log("User created successfully!");
+              // Optionally, redirect or show a success message to the user
             } else {
-              console.log("failure");
+              console.log("User creation failed:", data.message);
+              // Optionally, show an error message to the user
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            console.log("An error occurred while checking the username.");
+            console.log("An error occurred while creating the user.");
+            // Optionally, show an error message to the user
           });
       }
     });

@@ -49,9 +49,8 @@
                 investigator at the email address provided above.</p>
         </div>
         <p>
-            <a href="{{ url_for('signup') }}" class="signup-link-box">Sign up for the survey</a>
         </p>
-        <form>
+        <form action="/create_user" method="post">
             <label for="username">Enter Your Username</label><br>
             <input type="text" id="username" name="username"><br><br>
             <button type="submit">submit</button>

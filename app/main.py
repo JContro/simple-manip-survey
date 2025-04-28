@@ -14,25 +14,13 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-@app.get("/signup", response_class=HTMLResponse)
-async def signup(request: Request):
-    return templates.TemplateResponse("survey.html", {"request": request})
 from fastapi import Form, Depends
-from app.services.firestore import save_user_and_survey
+from app.services.firestore import save_user
 
-@app.post("/submit_survey")
-async def submit_survey(
-    username: str = Form(...),
-    age: int = Form(None),
-    gender: str = Form(None),
-    education: str = Form(None)
-):
-    survey_data = {
-        "age": age,
-        "gender": gender,
-        "education": education
-    }
-    result = save_user_and_survey(username, survey_data)
+@app.post("/create_user")
+async def create_user(username: str = Form(...)):
+    """Receives a username and creates a user."""
+    result = save_user(username) # Assuming a new function save_user in firestore.py
     return result
 
 @app.post("/write_test_data")

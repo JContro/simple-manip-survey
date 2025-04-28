@@ -71,20 +71,19 @@ def get_emails():
     except Exception as e:
         print(f"Error retrieving emails from Firestore: {e}")
         return {"status": "error", "message": str(e)}
-def save_user_and_survey(username: str, survey_data: dict):
-    """Saves user and survey data to the 'users' collection in Firestore."""
+def save_user(username: str):
+    """Saves a user with only a username to the 'users' collection in Firestore."""
     try:
         users_collection = db.collection("users")
         user_doc_ref = users_collection.document(username) # Use username as document ID
         user_doc_ref.set({
             "username": username,
-            "survey_data": survey_data,
             "timestamp": firestore.SERVER_TIMESTAMP # Use server timestamp
         })
-        print(f"User '{username}' and survey data saved to Firestore")
-        return {"status": "success", "message": "User and survey data saved successfully"}
+        print(f"User '{username}' saved to Firestore")
+        return {"status": "success", "message": "User saved successfully"}
     except Exception as e:
-        print(f"Error saving user and survey data to Firestore: {e}")
+        print(f"Error saving user to Firestore: {e}")
 def get_users():
     """Retrieves all users from the 'users' collection in Firestore."""
     try:
