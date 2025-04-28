@@ -4,7 +4,8 @@ import os
 
 # Define the API endpoint URL
 # Assuming the FastAPI app is running locally on port 8000
-API_URL = "http://localhost:8000/conversations"
+# API_URL = "http://localhost:8000/conversations"
+API_URL = "https://user-api-274208077023.europe-west2.run.app/conversations"
 CONVERSATIONS_FILE = "conversations.json"
 ERROR_CONVERSATIONS_FILE = "error_conversations.json"
 
