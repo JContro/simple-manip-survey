@@ -160,5 +160,43 @@ def delete_all_conversations():
         print(f"Error deleting conversations from Firestore: {e}")
         return {"status": "error", "message": str(e)}
 
+def assign_batch_to_user(username: str, batch: int):
+    """Assigns a batch number to a user in the 'users' collection."""
+    try:
+        users_collection = db.collection("users")
+        user_doc_ref = users_collection.document(username)
+
+        # Use a transaction to ensure atomicity
+        @firestore.transactional
+        def update_user_in_transaction(transaction, user_ref, batch_num):
+            user_doc = user_ref.get(transaction=transaction)
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                batches = user_data.get("batches", [])
+                if batch_num not in batches:
+                    batches.append(batch_num)
+                    transaction.update(user_ref, {"batches": batches})
+                    print(f"Batch {batch_num} assigned to existing user '{username}'")
+                    return {"status": "success", "message": f"Batch {batch_num} assigned to user {username}"}
+                else:
+                    print(f"Batch {batch_num} already assigned to user '{username}'")
+                    return {"status": "info", "message": f"Batch {batch_num} already assigned to user {username}"}
+            else:
+                # Create new user document with the batch
+                transaction.set(user_ref, {
+                    "username": username,
+                    "batches": [batch_num],
+                    "timestamp": firestore.SERVER_TIMESTAMP
+                })
+                print(f"New user '{username}' created and batch {batch_num} assigned")
+                return {"status": "success", "message": f"New user {username} created and batch {batch_num} assigned"}
+
+        transaction = db.transaction()
+        return update_user_in_transaction(transaction, user_doc_ref, batch)
+
+    except Exception as e:
+        print(f"Error assigning batch to user '{username}': {e}")
+        return {"status": "error", "message": str(e)}
+
 # Initialize client when the module is imported
 db = get_firestore_client()

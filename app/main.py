@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user
 import datetime
 
 app = FastAPI()
@@ -85,6 +85,10 @@ class Conversation(BaseModel):
     cleaned_conversation: List[Message]
     batch: int
 
+class AssignBatchData(BaseModel):
+    username: str
+    batch: int
+
 class EmailData(BaseModel):
     email: str
 
@@ -145,6 +149,12 @@ async def read_conversations(batch: Optional[int] = None):
 async def reset_conversations():
     """Deletes all saved conversations from Firestore."""
     result = delete_all_conversations()
+    return result
+
+@app.post("/assign_batch")
+async def assign_batch_endpoint(assign_batch_data: AssignBatchData):
+    """Receives a username and batch number and assigns the batch to the user."""
+    result = assign_batch_to_user(assign_batch_data.username, assign_batch_data.batch)
     return result
 
 from fastapi.responses import FileResponse
