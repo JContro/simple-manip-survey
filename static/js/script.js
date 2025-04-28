@@ -1,309 +1,99 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOMContentLoaded event fired.");
-  // Tab switching functionality
-  // const loginTab = document.getElementById("login-tab");
-  // const registerTab = document.getElementById("register-tab");
-  // const loginForm = document.getElementById("login-form");
-  // const registerForm = document.getElementById("register-form");
+  console.log("Survey page loaded.");
 
-  // loginTab.addEventListener("click", function () {
-  //   loginTab.classList.add("active");
-  //   registerTab.classList.remove("active");
-  //   loginForm.classList.add("active");
-  //   registerForm.classList.remove("active");
-  // });
+  const conversationContainer = document.getElementById(
+    "conversation-container"
+  );
+  const progressBar = document.getElementById("progress-bar");
+  const progressText = document.getElementById("progress-text");
+  const nextButton = document.getElementById("next-button");
 
-  // registerTab.addEventListener("click", function () {
-  //   registerTab.classList.add("active");
-  //   loginTab.classList.remove("active");
-  //   registerForm.classList.add("active");
-  //   loginForm.classList.remove("active");
-  // });
+  let conversations = []; // Array to hold all conversations for the batch
+  let currentConversationIndex = 0;
+  let totalConversationsInBatch = 0;
+  let currentBatch = 0;
+  let username = "";
 
-  // // Form validation
-  // const loginFormElement = document.getElementById("login");
-  // const registerFormElement = document.getElementById("register");
-
-  // // Login form validation
-  // loginFormElement.addEventListener("submit", function (e) {
-  //   e.preventDefault();
-
-  //   // Reset error messages
-  //   clearErrors("login");
-
-  //   const email = document.getElementById("login-email").value.trim();
-  //   const password = document.getElementById("login-password").value;
-  //   let isValid = true;
-
-  //   // Email validation
-  //   if (!email) {
-  //     showError("login-email", "Email is required");
-  //     isValid = false;
-  //   } else if (!isValidEmail(email)) {
-  //     showError("login-email", "Please enter a valid email address");
-  //     isValid = false;
-  //   }
-
-  //   // Password validation
-  //   if (!password) {
-  //     showError("login-password", "Password is required");
-  //     isValid = false;
-  //   }
-
-  //   if (isValid) {
-  //     // Simulate login process
-  //     simulateLoginProcess(email, password);
-  //   }
-  // });
-
-  // // Registration form validation
-  // registerFormElement.addEventListener("submit", function (e) {
-  //   e.preventDefault();
-
-  //   // Reset error messages
-  //   clearErrors("register");
-
-  //   const name = document.getElementById("register-name").value.trim();
-  //   const email = document.getElementById("register-email").value.trim();
-  //   const password = document.getElementById("register-password").value;
-  //   const confirmPassword = document.getElementById(
-  //     "register-confirm-password"
-  //   ).value;
-  //   let isValid = true;
-
-  //   // Name validation
-  //   if (!name) {
-  //     showError("register-name", "Name is required");
-  //     isValid = false;
-  //   }
-
-  //   // Email validation
-  //   if (!email) {
-  //     showError("register-email", "Email is required");
-  //     isValid = false;
-  //   } else if (!isValidEmail(email)) {
-  //     showError("register-email", "Please enter a valid email address");
-  //     isValid = false;
-  //   }
-
-  //   // Password validation
-  //   if (!password) {
-  //     showError("register-password", "Password is required");
-  //     isValid = false;
-  //   } else if (password.length < 8) {
-  //     showError(
-  //       "register-password",
-  //       "Password must be at least 8 characters long"
-  //     );
-  //     isValid = false;
-  //   }
-
-  //   // Confirm password validation
-  //   if (!confirmPassword) {
-  //     showError("register-confirm-password", "Please confirm your password");
-  //     isValid = false;
-  //   } else if (password !== confirmPassword) {
-  //     showError("register-confirm-password", "Passwords do not match");
-  //     isValid = false;
-  //   }
-
-  //   if (isValid) {
-  //     // Simulate registration process
-  //     simulateRegistrationProcess(name, email, password);
-  //   }
-  // });
-
-  // // Start survey button
-  // const startSurveyBtn = document.getElementById("start-survey-btn");
-  // startSurveyBtn.addEventListener("click", function () {
-  //   // Check if user is logged in (for demo purposes, we'll just show a message)
-  //   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-
-  //   if (isLoggedIn) {
-  //     // Redirect to survey page (would be implemented in a real app)
-  //     window.location.href = "#survey-page"; // Placeholder for demo
-  //     showMessage("login", "Redirecting to survey...", "success");
-  //   } else {
-  //     // Show message to login first
-  //     showMessage("login", "Please login to start the survey", "error");
-  //     // Scroll to login form
-  //     loginForm.scrollIntoView({ behavior: "smooth" });
-  //   }
-  // });
-
-  // // Remember me functionality
-  // const rememberMeCheckbox = document.getElementById("remember-me");
-
-  // // Check if there are saved credentials
-  // if (localStorage.getItem("rememberedEmail")) {
-  //   document.getElementById("login-email").value =
-  //     localStorage.getItem("rememberedEmail");
-  //   rememberMeCheckbox.checked = true;
-  // }
-
-  // Helper functions
-  function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // Function to update the progress bar
+  function updateProgressBar() {
+    const progress = (currentConversationIndex + 1) / totalConversationsInBatch;
+    progressBar.style.width = `${progress * 100}%`;
+    progressText.textContent = `Conversation ${
+      currentConversationIndex + 1
+    } of ${totalConversationsInBatch} (Batch ${currentBatch})`;
   }
 
-  function showError(fieldId, message) {
-    const errorElement = document.getElementById(`${fieldId}-error`);
-    errorElement.textContent = message;
+  // Function to display a conversation
+  function displayConversation(conversation) {
+    conversationContainer.innerHTML = ""; // Clear previous conversation
+
+    const conversationElement = document.createElement("div");
+    conversationElement.classList.add("conversation"); // Add a class for styling
+
+    const titleElement = document.createElement("h3");
+    titleElement.textContent = conversation.title;
+
+    const contentElement = document.createElement("div"); // Use a div for potentially complex content
+    // Displaying cleaned_conversation as an example, format as needed
+    contentElement.innerHTML =
+      "<pre>" +
+      JSON.stringify(conversation.cleaned_conversation, null, 2) +
+      "</pre>";
+
+    conversationElement.appendChild(titleElement);
+    conversationElement.appendChild(contentElement);
+    conversationContainer.appendChild(conversationElement);
   }
 
-  function clearErrors(formPrefix) {
-    const errorElements = document.querySelectorAll(
-      `#${formPrefix}-form .error-message`
-    );
-    errorElements.forEach((element) => {
-      element.textContent = "";
-    });
+  // Function to display the next conversation
+  function displayNextConversation() {
+    currentConversationIndex++;
 
-    // Clear form message
-    const messageElement = document.getElementById(`${formPrefix}-message`);
-    messageElement.textContent = "";
-    messageElement.className = "form-message";
+    if (currentConversationIndex < totalConversationsInBatch) {
+      displayConversation(conversations[currentConversationIndex]);
+      updateProgressBar();
+    } else {
+      // End of survey
+      conversationContainer.innerHTML =
+        "<p>You have completed this batch of the survey. Thank you!</p>";
+      nextButton.style.display = "none"; // Hide the next button
+      progressText.textContent = `Batch ${currentBatch} Completed!`;
+      progressBar.style.width = "100%";
+    }
   }
 
-  function showMessage(formPrefix, message, type) {
-    const messageElement = document.getElementById(`${formPrefix}-message`);
-    messageElement.textContent = message;
-    messageElement.className = `form-message ${type}`;
-  }
+  // Initialize the survey
+  function initializeSurvey() {
+    const initialDataElement = document.getElementById("initial-survey-data");
+    if (initialDataElement) {
+      const initialData = JSON.parse(initialDataElement.textContent);
+      username = initialData.username;
+      conversations = initialData.conversations; // Get all conversations
+      totalConversationsInBatch = initialData.total_in_batch;
+      currentBatch = initialData.current_batch;
+      currentConversationIndex = 0; // Start with the first conversation
 
-  function simulateLoginProcess(email, password) {
-    // This is a simulation - in a real app, you would make an API call
-    showMessage("login", "Logging in...", "success");
+      if (totalConversationsInBatch > 0) {
+        displayConversation(conversations[currentConversationIndex]);
+        updateProgressBar();
 
-    // Simulate API delay
-    setTimeout(() => {
-      // For demo purposes, any login attempt succeeds
-      localStorage.setItem("isLoggedIn", "true");
-
-      // Handle remember me
-      if (rememberMeCheckbox.checked) {
-        localStorage.setItem("rememberedEmail", email);
+        // Add event listener to the next button
+        nextButton.addEventListener("click", displayNextConversation);
       } else {
-        localStorage.removeItem("rememberedEmail");
+        conversationContainer.innerHTML =
+          "<p>No conversations found for this batch.</p>";
+        nextButton.style.display = "none";
+        progressText.textContent = `Batch ${currentBatch}`;
+        progressBar.style.width = "0%";
       }
-
-      showMessage("login", "Login successful!", "success");
-
-      // Redirect to survey after successful login (would be implemented in a real app)
-      setTimeout(() => {
-        window.location.href = "#survey-page"; // Placeholder for demo
-      }, 1000);
-    }, 1500);
-  }
-
-  function simulateRegistrationProcess(name, email, password) {
-    // This is a simulation - in a real app, you would make an API call
-    showMessage("register", "Creating your account...", "success");
-
-    // Simulate API delay
-    setTimeout(() => {
-      // For demo purposes, any registration attempt succeeds
-      showMessage(
-        "register",
-        "Registration successful! You can now login.",
-        "success"
-      );
-
-      // Clear form
-      document.getElementById("register-name").value = "";
-      document.getElementById("register-email").value = "";
-      document.getElementById("register-password").value = "";
-      document.getElementById("register-confirm-password").value = "";
-
-      // Switch to login tab after successful registration
-      setTimeout(() => {
-        loginTab.click();
-      }, 1500);
-    }, 1500);
-  }
-
-  // Handle username form submission on index.html
-  // Removed the JavaScript form submission handling to allow the browser to follow the redirect.
-  // const usernameForm = document.querySelector("form");
-  // if (usernameForm) {
-  //   usernameForm.addEventListener("submit", function (e) {
-  //     e.preventDefault();
-  //     const usernameInput = document.getElementById("username");
-  //     if (usernameInput && usernameInput.value) {
-  //       const username = usernameInput.value;
-
-  //       // Send to backend API to create user
-  //       fetch("/create_user", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/x-www-form-urlencoded", // Use this content type for form data
-  //         },
-  //         body: new URLSearchParams({ username: username }), // Send as form data
-  //       })
-  //         .then((response) => response.json())
-  //         .then((data) => {
-  //           console.log("Backend response:", data);
-  //           if (data.status === "success") {
-  //             console.log("User created successfully!");
-  //             // Optionally, redirect or show a success message to the user
-  //           } else {
-  //             console.log("User creation failed:", data.message);
-  //             // Optionally, show an error message to the user
-  //           }
-  //         })
-  //         .catch((error) => {
-  //           console.error("Error:", error);
-  //           console.log("An error occurred while creating the user.");
-  //           // Optionally, show an error message to the user
-  //         });
-  //     }
-  //   });
-  // }
-
-  // Display conversations on the survey page
-  console.log("Checking for conversations data.");
-  console.log("Type of conversations:", typeof conversations);
-  console.log("Conversations data:", conversations);
-
-  if (typeof conversations !== "undefined" && conversations.length > 0) {
-    console.log("Conversations found. Displaying...");
-    const conversationsContainer = document.getElementById(
-      "conversations-container"
-    );
-    console.log("Conversations container:", conversationsContainer);
-    if (conversationsContainer) {
-      conversations.forEach((conversation, index) => {
-        console.log(`Displaying conversation ${index}:`, conversation);
-        const conversationElement = document.createElement("div");
-        conversationElement.classList.add("conversation"); // Add a class for styling
-
-        const titleElement = document.createElement("h3");
-        titleElement.textContent = conversation.title;
-
-        const contentElement = document.createElement("p");
-        // Displaying cleaned_conversation as an example, you might want to format this differently
-        contentElement.textContent = JSON.stringify(
-          conversation.cleaned_conversation,
-          null,
-          2
-        );
-
-        conversationElement.appendChild(titleElement);
-        conversationElement.appendChild(contentElement);
-        conversationsContainer.appendChild(conversationElement);
-      });
-    }
-  } else if (
-    typeof conversations !== "undefined" &&
-    conversations.length === 0
-  ) {
-    const conversationsContainer = document.getElementById(
-      "conversations-container"
-    );
-    if (conversationsContainer) {
-      conversationsContainer.innerHTML =
-        "<p>No conversations assigned yet.</p>";
+    } else {
+      console.error("Initial survey data not found in the HTML.");
+      conversationContainer.innerHTML =
+        "<p>Error initializing survey data.</p>";
+      nextButton.style.display = "none";
     }
   }
+
+  // Call initializeSurvey when the DOM is ready
+  initializeSurvey();
 });

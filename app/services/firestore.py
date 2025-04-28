@@ -231,42 +231,67 @@ def delete_all_conversations():
         return {"status": "error", "message": str(e)}
 
 
-def assign_batch_to_user(username: str, batch: int):
-    """Assigns a batch number to a user in the 'users' collection."""
+def get_user_batch(username: str):
+    """Retrieves the assigned batch for a user from the 'users' collection."""
+    try:
+        users_collection = db.collection("users")
+        user_doc = users_collection.document(username).get()
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            # Assuming the user has a single assigned batch for this survey
+            # You might need to adjust this if a user can have multiple active batches
+            assigned_batches = user_data.get("batches", [])
+            if assigned_batches:
+                # For simplicity, return the first batch in the list
+                return {"status": "success", "batch": assigned_batches[0]}
+            else:
+                return {"status": "not found", "message": f"No batch assigned to user '{username}'"}
+        else:
+            return {"status": "not found", "message": f"User '{username}' not found"}
+    except Exception as e:
+        print(f"Error retrieving batch for user '{username}': {e}")
+        return {"status": "error", "message": str(e)}
+
+
+def assign_batch_to_user(username: str):
+    """Assigns a batch number to a user if they don't have one."""
     try:
         users_collection = db.collection("users")
         user_doc_ref = users_collection.document(username)
 
-        # Use a transaction to ensure atomicity
         @firestore.transactional
-        def update_user_in_transaction(transaction, user_ref, batch_num):
+        def update_user_in_transaction(transaction, user_ref):
             user_doc = user_ref.get(transaction=transaction)
             if user_doc.exists:
                 user_data = user_doc.to_dict()
-                batches = user_data.get("batches", [])
-                if batch_num not in batches:
-                    batches.append(batch_num)
-                    transaction.update(user_ref, {"batches": batches})
+                assigned_batches = user_data.get("batches", [])
+                if not assigned_batches:
+                    # Assign a default batch (e.g., batch 1) if no batch is assigned
+                    # In a real application, you'd have logic to determine the next batch to assign
+                    batch_to_assign = 1
+                    transaction.update(
+                        user_ref, {"batches": [batch_to_assign]})
                     print(
-                        f"Batch {batch_num} assigned to existing user '{username}'")
-                    return {"status": "success", "message": f"Batch {batch_num} assigned to user {username}"}
+                        f"Batch {batch_to_assign} assigned to existing user '{username}'")
+                    return {"status": "success", "batch": batch_to_assign, "message": f"Batch {batch_to_assign} assigned to user {username}"}
                 else:
-                    print(
-                        f"Batch {batch_num} already assigned to user '{username}'")
-                    return {"status": "info", "message": f"Batch {batch_num} already assigned to user {username}"}
+                    # User already has a batch assigned, return the first one
+                    print(f"User '{username}' already has batch(es) assigned.")
+                    return {"status": "info", "batch": assigned_batches[0], "message": f"User {username} already has batch {assigned_batches[0]} assigned"}
             else:
-                # Create new user document with the batch
+                # Create new user document and assign a default batch
+                batch_to_assign = 1
                 transaction.set(user_ref, {
                     "username": username,
-                    "batches": [batch_num],
+                    "batches": [batch_to_assign],
                     "timestamp": firestore.SERVER_TIMESTAMP
                 })
                 print(
-                    f"New user '{username}' created and batch {batch_num} assigned")
-                return {"status": "success", "message": f"New user {username} created and batch {batch_num} assigned"}
+                    f"New user '{username}' created and batch {batch_to_assign} assigned")
+                return {"status": "success", "batch": batch_to_assign, "message": f"New user {username} created and batch {batch_to_assign} assigned"}
 
         transaction = db.transaction()
-        return update_user_in_transaction(transaction, user_doc_ref, batch)
+        return update_user_in_transaction(transaction, user_doc_ref)
 
     except Exception as e:
         print(f"Error assigning batch to user '{username}': {e}")

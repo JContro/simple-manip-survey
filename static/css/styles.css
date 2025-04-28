@@ -276,6 +276,41 @@ body {
     color: #333;
 }
 
+/* Styles for survey.html */
+#conversation-container {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background-color: #e9f0ff;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.bot-message {
+    background-color: #f1f1f1;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+.message strong {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
 h1 {
     text-align: center;
     color: #1a2e4a;

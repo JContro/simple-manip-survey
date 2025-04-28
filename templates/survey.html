@@ -12,13 +12,36 @@
     <div>
         <h1>Welcome to the Survey, {{ username }}!</h1>
         <p>This is the survey page for user: {{ username }}</p>
-        <script>
-            var conversations = {{ conversations | tojson }};
+
+        <!-- Element to hold initial survey data -->
+        <script id="initial-survey-data" type="application/json">
+            {{ {
+                "username": username,
+                "conversations": conversations,
+                "current_index": 0,
+                "total_in_batch": total_in_batch,
+                "current_batch": current_batch
+            } | tojson }}
         </script>
-        <!-- Survey content will go here -->
-        <div id="conversations-container">
-            <!-- Conversations will be loaded here by script.js -->
+
+        <!-- Progress bar container -->
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+            <div id="progress-text"></div>
         </div>
+
+        <!-- Conversation container -->
+        <div id="conversation-container">
+            <!-- Single conversation will be loaded here by script.js -->
+        </div>
+
+        <!-- Next button -->
+        <!-- Backwards button -->
+        <button id="back-button" style="display: none;">Previous Conversation</button>
+
+        <!-- Next button -->
+        <button id="next-button">Next Conversation</button>
+
     </div>
     <script src="{{ url_for('static', path='/js/script.js') }}"></script>
 </body>
