@@ -117,15 +117,29 @@ def save_conversation(conversation_data: dict):
         print(f"Error saving conversation to Firestore: {e}")
         return {"status": "error", "message": str(e)}
 
-def get_conversations():
-    """Retrieves all conversations from the 'conversations' collection in Firestore."""
+from typing import Optional
+
+def get_conversations(batch: Optional[int] = None):
+    """Retrieves conversations from the 'conversations' collection in Firestore, optionally filtered by batch."""
     try:
         conversations_collection = db.collection("conversations")
-        docs = conversations_collection.stream()
+        
+        query = conversations_collection.order_by("uuid") # Order by uuid for consistent results
+        
+        if batch is not None:
+            query = query.where("batch", "==", batch)
+            print(f"Filtering conversations by batch: {batch}")
+            
+        docs = query.stream()
         conversations_list = []
         for doc in docs:
             conversations_list.append(doc.to_dict())
-        print(f"Retrieved {len(conversations_list)} conversations from Firestore")
+        
+        if batch is not None:
+             print(f"Retrieved {len(conversations_list)} conversations for batch {batch} from Firestore")
+        else:
+             print(f"Retrieved {len(conversations_list)} total conversations from Firestore")
+             
         return {"status": "success", "data": conversations_list}
     except Exception as e:
         print(f"Error retrieving conversations from Firestore: {e}")

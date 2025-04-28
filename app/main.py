@@ -133,10 +133,12 @@ async def create_conversation(conversation: Conversation):
     result = save_conversation(conversation.model_dump())
     return result
 
+from typing import Optional
+
 @app.get("/conversations")
-async def read_conversations():
-    """Retrieves all saved conversations from Firestore."""
-    result = get_conversations()
+async def read_conversations(batch: Optional[int] = None):
+    """Retrieves saved conversations from Firestore, optionally filtered by batch."""
+    result = get_conversations(batch=batch)
     return result
 
 @app.delete("/conversations")
