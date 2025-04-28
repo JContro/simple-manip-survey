@@ -29,6 +29,8 @@ def upload_conversations():
     print(f"Attempting to upload {len(conversations)} conversations...")
 
     for i, conversation in enumerate(conversations):
+        
+
         try:
             response = requests.post(API_URL, json=conversation)
             response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)

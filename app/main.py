@@ -73,11 +73,12 @@ class Conversation(BaseModel):
     option: str
     prompt_type: str
     prompt: str
+    prompted_as: str
     manipulation_type: Optional[str] = None
     manipulation_description: Optional[str] = None
     chat_completion: str
     processing_time: float
-    timestamp: int
+    # timestamp: str
     error: Optional[str] = None
     persuasion_strength: Optional[str] = None
     generated_text: Optional[str] = None
