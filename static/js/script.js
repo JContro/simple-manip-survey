@@ -107,8 +107,58 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Function to submit survey data for the current conversation
+  async function submitSurveyData() {
+    const currentConversation = conversations[currentConversationIndex];
+    const surveyQuestionsDiv = document.getElementById("survey-questions");
+    const surveyResponses = {
+      username: username,
+      conversation_uuid: currentConversation.uuid,
+    };
+
+    if (surveyQuestionsDiv) {
+      const questionDivs = surveyQuestionsDiv.querySelectorAll(".question");
+      questionDivs.forEach((questionDiv) => {
+        const radioButtons = questionDiv.querySelectorAll(
+          'input[type="radio"]'
+        );
+        radioButtons.forEach((radio) => {
+          if (radio.checked) {
+            surveyResponses[radio.name] = parseInt(radio.value);
+          }
+        });
+      });
+    }
+
+    // TODO: Collect highlighted text data if needed
+
+    try {
+      const response = await fetch("/submit_survey", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(surveyResponses),
+      });
+
+      const result = await response.json();
+      console.log("Survey submission result:", result);
+
+      if (result.status !== "success") {
+        console.error("Failed to submit survey data:", result.message);
+        // Optionally display an error message to the user
+      }
+    } catch (error) {
+      console.error("Error submitting survey data:", error);
+      // Optionally display an error message to the user
+    }
+  }
+
   // Function to display the next conversation
-  function displayNextConversation() {
+  async function displayNextConversation() {
+    // Submit survey data for the current conversation before moving to the next
+    await submitSurveyData();
+
     currentConversationIndex++;
 
     // Reset survey selections
@@ -140,6 +190,7 @@ document.addEventListener("DOMContentLoaded", function () {
         totalConversationsInBatch > 1 ? "inline-block" : "none"; // Show back if there was more than one convo
       progressText.textContent = `Batch ${currentBatch} Completed!`;
       progressBar.style.width = "100%";
+      // Optionally redirect the user or show a final message
     }
   }
 

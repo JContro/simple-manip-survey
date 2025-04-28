@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses
 import datetime
 
 app = FastAPI()
@@ -229,6 +229,13 @@ async def assign_batch_endpoint(assign_batch_data: AssignBatchData):
 async def submit_survey(survey_response_data: SurveyResponseData):
     """Receives survey responses and saves them to Firestore."""
     result = save_survey_response(survey_response_data.model_dump())
+    return result
+
+
+@app.get("/survey_responses")
+async def read_survey_responses():
+    """Retrieves all saved survey responses from Firestore."""
+    result = get_survey_responses()
     return result
 
 

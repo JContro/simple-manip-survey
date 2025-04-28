@@ -293,5 +293,21 @@ def save_survey_response(survey_response_data: dict):
         return {"status": "error", "message": str(e)}
 
 
+def get_survey_responses():
+    """Retrieves all survey responses from the 'survey_responses' collection in Firestore."""
+    try:
+        survey_responses_collection = db.collection("survey_responses")
+        docs = survey_responses_collection.stream()
+        survey_responses_list = []
+        for doc in docs:
+            survey_responses_list.append(doc.to_dict())
+        print(
+            f"Retrieved {len(survey_responses_list)} survey responses from Firestore")
+        return {"status": "success", "data": survey_responses_list}
+    except Exception as e:
+        print(f"Error retrieving survey responses from Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Initialize client when the module is imported
 db = get_firestore_client()
