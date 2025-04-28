@@ -1,77 +1,48 @@
 import json
 import requests
-import datetime
+import os
 
-def upload_conversations(file_path="conversations.json", url="http://localhost:8000/conversations"):
+# Define the API endpoint URL
+# Assuming the FastAPI app is running locally on port 8000
+API_URL = "http://localhost:8000/conversations"
+CONVERSATIONS_FILE = "conversations.json"
+ERROR_CONVERSATIONS_FILE = "error_conversations.json"
+
+def upload_conversations():
     """
-    Reads a JSON file and uploads its content via a POST request.
-
-    Args:
-        file_path (str): The path to the JSON file.
-        url (str): The URL to send the POST request to.
+    Reads conversations from conversations.json, uploads them to the API,
+    and saves failed uploads to error_conversations.json.
     """
-    try:
-        with open(file_path, 'r') as f:
-            conversations_list = json.load(f)
+    failed_conversations = []
 
-        headers = {'Content-Type': 'application/json'}
-        
-        successful_uploads = 0
-        error_conversations = []
+    if not os.path.exists(CONVERSATIONS_FILE):
+        print(f"Error: {CONVERSATIONS_FILE} not found.")
+        return
 
-        for conversation in conversations_list:
-            # Convert timestamp string to integer Unix timestamp
-            timestamp_str = conversation.get('timestamp')
-            if timestamp_str:
-                try:
-                    # Handle potential variations in timestamp format
-                    if '.' in timestamp_str:
-                         # Handle timestamps with microseconds
-                        dt_object = datetime.datetime.fromisoformat(timestamp_str)
-                    else:
-                        # Handle timestamps without microseconds
-                        dt_object = datetime.datetime.fromisoformat(timestamp_str + ".0") # Add .0 for consistent parsing
-                    conversation['timestamp'] = int(dt_object.timestamp())
-                except ValueError as e:
-                    print(f"Error converting timestamp for conversation with uuid: {conversation.get('uuid', 'N/A')}: {e}")
-                    error_conversations.append(conversation)
-                    continue # Skip to the next conversation if timestamp conversion fails
-            else:
-                print(f"Warning: Timestamp missing for conversation with uuid: {conversation.get('uuid', 'N/A')}")
-                # Decide how to handle missing timestamps - either skip or assign a default
-                # For now, let's add it to error_conversations
-                error_conversations.append(conversation)
-                continue
+    with open(CONVERSATIONS_FILE, 'r') as f:
+        try:
+            conversations = json.load(f)
+        except json.JSONDecodeError:
+            print(f"Error: Could not decode JSON from {CONVERSATIONS_FILE}.")
+            return
 
+    print(f"Attempting to upload {len(conversations)} conversations...")
 
-            try:
-                response = requests.post(url, json=conversation, headers=headers)
-                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
-                print(f"Successfully uploaded conversation with uuid: {conversation.get('uuid', 'N/A')}. Status Code: {response.status_code}")
-                successful_uploads += 1
-            except requests.exceptions.RequestException as e:
-                print(f"Error uploading conversation with uuid: {conversation.get('uuid', 'N/A')}: {e}")
-                error_conversations.append(conversation)
-            except Exception as e:
-                print(f"An unexpected error occurred for conversation with uuid: {conversation.get('uuid', 'N/A')}: {e}")
-                error_conversations.append(conversation)
+    for i, conversation in enumerate(conversations):
+        try:
+            response = requests.post(API_URL, json=conversation)
+            response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+            print(f"Successfully uploaded conversation {i+1}/{len(conversations)}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to upload conversation {i+1}/{len(conversations)}: {e}")
+            failed_conversations.append(conversation)
 
-        if error_conversations:
-            error_file_path = "error_conversations.json"
-            with open(error_file_path, 'w') as f:
-                json.dump(error_conversations, f, indent=4)
-            print(f"Saved {len(error_conversations)} faulty conversations to {error_file_path}")
-
-        print(f"\nOperation complete. Successfully uploaded {successful_uploads} conversations.")
-
-    except FileNotFoundError:
-        print(f"Error: File not found at {file_path}")
-    except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {file_path}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+    if failed_conversations:
+        print(f"Saving {len(failed_conversations)} failed conversations to {ERROR_CONVERSATIONS_FILE}")
+        with open(ERROR_CONVERSATIONS_FILE, 'w') as f:
+            json.dump(failed_conversations, f, indent=4)
+    else:
+        print("All conversations uploaded successfully.")
 
 if __name__ == "__main__":
-    # Assuming the script is run from the project root or data directory
-    # Adjust the file_path if necessary
-    upload_conversations(file_path="conversations.json")
+    upload_conversations()
