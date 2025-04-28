@@ -56,13 +56,29 @@ document.addEventListener("DOMContentLoaded", function () {
         // Use turn.role for speaker
         speakerElement.textContent = `${turn.role || "Unknown"}: `; // Handle potential missing role
 
-        const textElement = document.createElement("span");
-        // Use turn.content for text
-        textElement.textContent = turn.content || ""; // Handle potential missing content
+        const textContent = turn.content || ""; // Handle potential missing content
+        // Split text into sentences (basic split by ., !, ?)
+        const sentences = textContent.match(/[^.!?]+[.!?]+/g) || [textContent];
 
-        turnElement.appendChild(speakerElement);
-        turnElement.appendChild(textElement);
+        turnElement.appendChild(speakerElement); // Add speaker before sentences
+
+        sentences.forEach((sentenceText) => {
+          const sentenceElement = document.createElement("span");
+          sentenceElement.textContent = sentenceText.trim();
+          sentenceElement.classList.add("sentence"); // Add a class to identify sentences
+          turnElement.appendChild(sentenceElement);
+        });
+
         conversationElement.appendChild(turnElement);
+      });
+
+      // Add click event listener to the conversation container
+      conversationElement.addEventListener("click", function (event) {
+        const target = event.target;
+        // Check if the clicked element is a sentence span
+        if (target.classList.contains("sentence")) {
+          target.classList.toggle("highlighted-sentence");
+        }
       });
     } else {
       // Fallback if cleaned_conversation is not in the expected format

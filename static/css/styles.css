@@ -498,57 +498,9 @@ button[type="submit"]:hover {
 /* Generic styling if speaker is unknown or different */
 .turn:not(.user-turn):not(.agent-turn) {
     background-color: #fafafa;
-    color: #555;
-    margin-right: auto; /* Default to left alignment */
-    border-bottom-left-radius: 5px;
 }
 
-/* Ensure buttons have some space */
-#back-button, #next-button {
-    margin-top: 15px;
-    margin-right: 10px; /* Add space between buttons */
-    padding: 10px 20px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-#back-button:hover, #next-button:hover {
-    background-color: #3a5ad9;
-}
-
-#back-button:disabled, #next-button:disabled {
-    background-color: var(--light-gray);
-    cursor: not-allowed;
-}
-
-/* Progress bar styling */
-#progress-container {
-    width: 100%;
-    background-color: var(--light-gray);
-    border-radius: 5px;
-    margin-bottom: 20px;
-    overflow: hidden; /* Ensure inner bar stays contained */
-    position: relative; /* Needed for absolute positioning of text if desired, or just for context */
-}
-
-#progress-bar {
-    height: 20px;
-    width: 0%; /* Initial width */
-    background-color: var(--success-color);
-    border-radius: 5px 0 0 5px; /* Rounded corners on the left */
-    transition: width 0.4s ease;
-}
-
-#progress-text {
-    text-align: center;
-    padding: 5px;
-    font-size: 0.9em;
-    color: var(--dark-gray);
-    white-space: nowrap; /* Prevent text from wrapping */
-    overflow: hidden; /* Hide overflowing text */
-    text-overflow: ellipsis; /* Show ellipsis for truncated text */
+.highlighted-sentence {
+    background-color: yellow; /* Or any other highlighting style */
+    cursor: pointer; /* Indicate that the sentence is clickable */
 }
