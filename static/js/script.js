@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("DOMContentLoaded event fired.");
   // Tab switching functionality
   // const loginTab = document.getElementById("login-tab");
   // const registerTab = document.getElementById("register-tab");
@@ -259,4 +260,50 @@ document.addEventListener("DOMContentLoaded", function () {
   //     }
   //   });
   // }
+
+  // Display conversations on the survey page
+  console.log("Checking for conversations data.");
+  console.log("Type of conversations:", typeof conversations);
+  console.log("Conversations data:", conversations);
+
+  if (typeof conversations !== "undefined" && conversations.length > 0) {
+    console.log("Conversations found. Displaying...");
+    const conversationsContainer = document.getElementById(
+      "conversations-container"
+    );
+    console.log("Conversations container:", conversationsContainer);
+    if (conversationsContainer) {
+      conversations.forEach((conversation, index) => {
+        console.log(`Displaying conversation ${index}:`, conversation);
+        const conversationElement = document.createElement("div");
+        conversationElement.classList.add("conversation"); // Add a class for styling
+
+        const titleElement = document.createElement("h3");
+        titleElement.textContent = conversation.title;
+
+        const contentElement = document.createElement("p");
+        // Displaying cleaned_conversation as an example, you might want to format this differently
+        contentElement.textContent = JSON.stringify(
+          conversation.cleaned_conversation,
+          null,
+          2
+        );
+
+        conversationElement.appendChild(titleElement);
+        conversationElement.appendChild(contentElement);
+        conversationsContainer.appendChild(conversationElement);
+      });
+    }
+  } else if (
+    typeof conversations !== "undefined" &&
+    conversations.length === 0
+  ) {
+    const conversationsContainer = document.getElementById(
+      "conversations-container"
+    );
+    if (conversationsContainer) {
+      conversationsContainer.innerHTML =
+        "<p>No conversations assigned yet.</p>";
+    }
+  }
 });

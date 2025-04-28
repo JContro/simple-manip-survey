@@ -12,8 +12,15 @@
     <div>
         <h1>Welcome to the Survey, {{ username }}!</h1>
         <p>This is the survey page for user: {{ username }}</p>
+        <script>
+            var conversations = {{ conversations | tojson }};
+        </script>
         <!-- Survey content will go here -->
+        <div id="conversations-container">
+            <!-- Conversations will be loaded here by script.js -->
+        </div>
     </div>
+    <script src="{{ url_for('static', path='/js/script.js') }}"></script>
 </body>
 
 </html>

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username
 import datetime
 
 app = FastAPI()
@@ -123,8 +123,11 @@ async def healthcheck():
 
 @app.get("/survey/{username}", response_class=HTMLResponse)
 async def read_survey(request: Request, username: str):
-    """Displays the survey page with the provided username."""
-    return templates.TemplateResponse("survey.html", {"request": request, "username": username})
+    """Displays the survey page with the provided username and conversations."""
+    conversations_result = get_conversations_by_username(username)
+    conversations = conversations_result.get("data", []) # Get data or empty list on error/not found
+
+    return templates.TemplateResponse("survey.html", {"request": request, "username": username, "conversations": conversations})
 
 @app.post("/conversations")
 async def create_conversation(conversation: Conversation):
