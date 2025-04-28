@@ -146,8 +146,18 @@ document.addEventListener("DOMContentLoaded", function () {
         nextButton.addEventListener("click", displayNextConversation);
         backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
 
-        // Initially hide back button
+        // Initially hide back button and disable next button
         backButton.style.display = "none";
+        nextButton.disabled = true;
+
+        // Add event listeners to survey radio buttons
+        const surveyQuestionsDiv = document.getElementById("survey-questions");
+        if (surveyQuestionsDiv) {
+          surveyQuestionsDiv.addEventListener("change", checkSurveyCompletion);
+        }
+
+        // Initial check for survey completion
+        checkSurveyCompletion();
       } else {
         conversationContainer.innerHTML =
           "<p>No conversations found for this batch.</p>";
@@ -162,6 +172,30 @@ document.addEventListener("DOMContentLoaded", function () {
         "<p>Error initializing survey data.</p>";
       nextButton.style.display = "none";
     }
+  }
+
+  // Function to check if all survey questions are answered
+  function checkSurveyCompletion() {
+    const surveyQuestionsDiv = document.getElementById("survey-questions");
+    if (!surveyQuestionsDiv) return;
+
+    const questionDivs = surveyQuestionsDiv.querySelectorAll(".question");
+    let allAnswered = true;
+
+    questionDivs.forEach((questionDiv) => {
+      const radioButtons = questionDiv.querySelectorAll('input[type="radio"]');
+      let questionAnswered = false;
+      radioButtons.forEach((radio) => {
+        if (radio.checked) {
+          questionAnswered = true;
+        }
+      });
+      if (!questionAnswered) {
+        allAnswered = false;
+      }
+    });
+
+    nextButton.disabled = !allAnswered;
   }
 
   // Call initializeSurvey when the DOM is ready
