@@ -63,6 +63,12 @@ document.addEventListener("DOMContentLoaded", function () {
   function displayConversation(conversation) {
     conversationContainer.innerHTML = ""; // Clear previous conversation
 
+    // Add context before the conversation
+    const contextElement = document.createElement("div");
+    contextElement.classList.add("context-container"); // Add a class for styling
+    contextElement.innerHTML = `<h3>Context:</h3><p>${conversation.context}</p>`;
+    conversationContainer.appendChild(contextElement);
+
     const conversationElement = document.createElement("div");
     conversationElement.classList.add("conversation"); // Add a class for styling
 
