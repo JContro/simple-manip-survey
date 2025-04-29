@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses, add_completed_batch_to_user
 import datetime
 
 app = FastAPI()
@@ -125,6 +125,11 @@ class UsernameData(BaseModel):
     username: str
 
 
+class CompleteBatchData(BaseModel):
+    username: str
+    batch: int
+
+
 @app.post("/check_username")
 async def check_username_endpoint(username_data: UsernameData):
     """Receives a username and checks if it exists in Firestore."""
@@ -236,6 +241,14 @@ async def submit_survey(survey_response_data: SurveyResponseData):
 async def read_survey_responses():
     """Retrieves all saved survey responses from Firestore."""
     result = get_survey_responses()
+    return result
+
+
+@app.post("/complete_batch")
+async def complete_batch_endpoint(complete_batch_data: CompleteBatchData):
+    """Receives a username and batch number and adds the batch to the user's completed batches."""
+    result = add_completed_batch_to_user(
+        complete_batch_data.username, complete_batch_data.batch)
     return result
 
 

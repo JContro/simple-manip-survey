@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const progressText = document.getElementById("progress-text");
   const nextButton = document.getElementById("next-button");
   const backButton = document.getElementById("back-button"); // Get the back button
+  const completeBatchButton = document.getElementById("complete-batch-button"); // Get the complete batch button
 
   let conversations = []; // Array to hold all conversations for the batch
   let currentConversationIndex = 0;
@@ -103,7 +104,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // Handle case where it's the last conversation
     if (currentConversationIndex >= totalConversationsInBatch - 1) {
       nextButton.style.display = "none"; // Hide next button explicitly
-      // Optionally show a 'Finish' or 'Submit' button here
+      completeBatchButton.style.display = "inline-block"; // Show the complete batch button
+    } else {
+      completeBatchButton.style.display = "none"; // Hide complete batch button
     }
   }
 
@@ -203,6 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
       conversationContainer.innerHTML =
         "<p>You have completed this batch of the survey. Thank you!</p>";
       nextButton.style.display = "none"; // Hide the next button
+      completeBatchButton.style.display = "inline-block"; // Show the complete batch button
       backButton.style.display =
         totalConversationsInBatch > 1 ? "inline-block" : "none"; // Show back if there was more than one convo
       progressText.textContent = `Batch ${currentBatch} Completed!`;
@@ -243,6 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Add event listeners
         nextButton.addEventListener("click", displayNextConversation);
         backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
+        completeBatchButton.addEventListener("click", completeBatch); // Add listener for complete batch button
 
         // Initially hide back button and disable next button
         backButton.style.display = "none";
@@ -294,6 +299,35 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     nextButton.disabled = !allAnswered;
+  }
+
+  // Function to call the /complete_batch endpoint
+  async function completeBatch() {
+    try {
+      const response = await fetch("/complete_batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username,
+          batch: currentBatch,
+        }),
+      });
+
+      const result = await response.json();
+      console.log("Complete batch result:", result);
+
+      if (result.status === "success") {
+        alert("Batch completed successfully!"); // Simple success feedback
+        // Optionally redirect the user or update the UI further
+      } else {
+        alert("Failed to complete batch: " + result.message); // Simple error feedback
+      }
+    } catch (error) {
+      console.error("Error completing batch:", error);
+      alert("An error occurred while trying to complete the batch."); // Simple error feedback
+    }
   }
 
   // Call initializeSurvey when the DOM is ready

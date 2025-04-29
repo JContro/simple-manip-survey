@@ -293,6 +293,26 @@ def save_survey_response(survey_response_data: dict):
         return {"status": "error", "message": str(e)}
 
 
+def add_completed_batch_to_user(username: str, batch: int):
+    """Adds a completed batch number to the user's completed_batches list."""
+    try:
+        users_collection = db.collection("users")
+        user_doc_ref = users_collection.document(username)
+
+        # Use arrayUnion to add the batch to the 'completed_batches' array
+        # This will create the field if it doesn't exist
+        user_doc_ref.update({
+            "completed_batches": firestore.ArrayUnion([batch])
+        })
+
+        print(f"Batch {batch} added to completed_batches for user '{username}'")
+        return {"status": "success", "message": f"Batch {batch} added to completed batches for user '{username}'"}
+
+    except Exception as e:
+        print(f"Error adding completed batch to user '{username}': {e}")
+        return {"status": "error", "message": str(e)}
+
+
 def get_survey_responses():
     """Retrieves all survey responses from the 'survey_responses' collection in Firestore."""
     try:
