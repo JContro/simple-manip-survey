@@ -171,6 +171,8 @@ async def read_survey(request: Request, username: str):
     user_result = get_user_by_username(username)
 
     if user_result["status"] != "success":
+        print("DEBUG: user result error")
+        print(user_result)
         # Handle case where user is not found or an error occurred
         return templates.TemplateResponse("error.html", {"request": request, "message": user_result.get("message", "Error retrieving user data.")})
 
@@ -196,6 +198,8 @@ async def read_survey(request: Request, username: str):
     if not conversations:
         # Handle case where the uncompleted batch has no conversations
         # This might indicate a data issue, but we should handle it gracefully
+        print("DEBUG conversation load error")
+        print(conversations_result)
         return templates.TemplateResponse("error.html", {"request": request, "message": f"No conversations found for batch {uncompleted_batch} assigned to user '{username}'."})
 
     # Render the survey page with the uncompleted batch's data
