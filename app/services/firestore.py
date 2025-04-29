@@ -155,8 +155,7 @@ def get_conversations(batch: Optional[int] = None):
     try:
         conversations_collection = db.collection("conversations")
 
-        # query = conversations_collection.order_by(
-        #     "uuid")  # Order by uuid for consistent results
+        query = conversations_collection
 
         if batch is not None:
             query = query.where("batch", "==", batch)
