@@ -20,7 +20,10 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    import os
+    is_local = os.environ.get("FIRESTORE_EMULATOR_HOST") is not None
+    scheme = "http" if is_local else "https"
+    return templates.TemplateResponse("index.html", {"request": request, "scheme": scheme})
 
 
 @app.post("/create_user")
