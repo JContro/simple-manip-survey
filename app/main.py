@@ -28,10 +28,22 @@ async def read_root(request: Request):
 
 @app.post("/create_user")
 async def create_user(username: str = Form(...)):
-    """Receives a username and creates a user."""
-    result = save_user(
-        username)  # Assuming a new function save_user in firestore.py
-    # Redirect to the survey page after creating the user
+    """Receives a username and creates a user if they don't exist."""
+    if not username_exists(username):
+        print(f"Username '{username}' does not exist. Creating user.")
+        result = save_user(username)
+        # Handle potential errors from save_user if necessary
+        if result.get("status") == "error":
+            # You might want to return an error page or message here
+            print(f"Error creating user: {result.get('message')}")
+            # Assuming an error page exists
+            return RedirectResponse(url="/error", status_code=303)
+    else:
+        print(f"Username '{username}' already exists. Proceeding to survey.")
+        # User exists, proceed without creating
+        pass  # No action needed, will redirect below
+
+    # Redirect to the survey page after checking/creating the user
     return RedirectResponse(url=f"/survey/{username}", status_code=303)
 
 
