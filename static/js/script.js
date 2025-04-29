@@ -130,7 +130,14 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    // TODO: Collect highlighted text data if needed
+    // Collect highlighted text data
+    const highlightedSentences = conversationContainer.querySelectorAll(
+      ".highlighted-sentence"
+    );
+    const highlightedText = Array.from(highlightedSentences)
+      .map((sentence) => sentence.textContent)
+      .join(" <<>> ");
+    surveyResponses["highlighted_text"] = highlightedText;
 
     try {
       const response = await fetch("/submit_survey", {

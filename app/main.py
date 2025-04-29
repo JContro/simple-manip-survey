@@ -118,7 +118,7 @@ class SurveyResponseData(BaseModel):
     manipulative_negging: Optional[int] = None
     manipulative_emotional_blackmail: Optional[int] = None
     manipulative_fear_enhancement: Optional[int] = None
-    # Add fields for highlighted text if needed later
+    highlighted_text: Optional[str] = None
 
 
 class UsernameData(BaseModel):
