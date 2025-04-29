@@ -11,7 +11,14 @@
 <body>
     <div>
         <h1>Welcome to the Survey, {{ username }}!</h1>
+
         <p>This is the survey page for user: {{ username }}</p>
+
+        <!-- Section to display batch status -->
+        <div id="batch-status">
+            <h2>Batch Status</h2>
+            <p>Loading batch information...</p>
+        </div>
 
         <!-- Element to hold initial survey data -->
         <script id="initial-survey-data" type="application/json">
@@ -20,7 +27,9 @@
                 "conversations": conversations,
                 "current_index": 0,
                 "total_in_batch": total_in_batch,
-                "current_batch": current_batch
+                "current_batch": current_batch,
+                "assigned_batches": assigned_batches,
+                "completed_batches": completed_batches
             } | tojson }}
         </script>
 

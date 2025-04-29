@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses, add_completed_batch_to_user
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses, add_completed_batch_to_user, get_user_by_username
 import datetime
 
 app = FastAPI()
@@ -163,41 +163,48 @@ async def healthcheck():
 
 @app.get("/survey/{username}", response_class=HTMLResponse)
 async def read_survey(request: Request, username: str):
-    """Displays the survey page with the provided username and the first conversation."""
-    # Assign a batch to the user if they don't have one
-    # This logic needs to be implemented in firestore.py and potentially handle batch assignment strategy
-    # For now, let's assume assign_batch_to_user handles this and returns the assigned batch number
-    # Modify assign_batch_to_user to handle assignment if needed
-    # Check if the user has an assigned batch
-    user_batch_result = get_user_batch(username)
-    assigned_batch = user_batch_result.get("batch")
+    """Displays the survey page with the provided username and an uncompleted batch."""
+    # Get user data including assigned and completed batches
+    user_result = get_user_by_username(username)
 
-    if not assigned_batch:
-        # If no batch is assigned, we cannot proceed to get conversations.
-        # The logic for assigning a new batch needs to be implemented.
-        # For now, return an error message.
-        return templates.TemplateResponse("error.html", {"request": request, "message": f"No batch assigned to user '{username}'. Batch assignment logic is not yet implemented."})
+    if user_result["status"] != "success":
+        # Handle case where user is not found or an error occurred
+        return templates.TemplateResponse("error.html", {"request": request, "message": user_result.get("message", "Error retrieving user data.")})
 
-    # Get conversations for the assigned batch
-    conversations_result = get_conversations(batch=assigned_batch)
+    user_data = user_result["data"]
+    assigned_batches = user_data.get("batches", [])
+    completed_batches = user_data.get("completed_batches", [])
+
+    # Find the first uncompleted batch
+    uncompleted_batch = None
+    for batch in assigned_batches:
+        if batch not in completed_batches:
+            uncompleted_batch = batch
+            break
+
+    if uncompleted_batch is None:
+        # If no uncompleted batches are found
+        return templates.TemplateResponse("completion.html", {"request": request, "username": username, "message": "You have completed all assigned batches. Thank you!"})
+
+    # Get conversations for the uncompleted batch
+    conversations_result = get_conversations(batch=uncompleted_batch)
     conversations = conversations_result.get("data", [])
 
     if not conversations:
-        # Handle case where the assigned batch has no conversations
-        return templates.TemplateResponse("error.html", {"request": request, "message": f"No conversations found for batch {assigned_batch}."})
+        # Handle case where the uncompleted batch has no conversations
+        # This might indicate a data issue, but we should handle it gracefully
+        return templates.TemplateResponse("error.html", {"request": request, "message": f"No conversations found for batch {uncompleted_batch} assigned to user '{username}'."})
 
-    # Return the first conversation and batch information
-    first_conversation = conversations[0]
-    total_conversations_in_batch = len(conversations)
-
+    # Render the survey page with the uncompleted batch's data
     return templates.TemplateResponse("survey.html", {
         "request": request,
         "username": username,
-        "conversations": conversations,  # Pass the entire list of conversations
+        # Pass the entire list of conversations for the uncompleted batch
+        "conversations": conversations,
         "total_in_batch": len(conversations),
-        "current_batch": assigned_batch,
-        # Assuming total number of batches is available or can be calculated
-        # "total_batches": total_batches
+        "current_batch": uncompleted_batch,
+        "assigned_batches": assigned_batches,  # Pass assigned batches
+        "completed_batches": completed_batches,  # Pass completed batches
     })
 
 

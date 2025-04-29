@@ -16,6 +16,40 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentBatch = 0;
   let username = "";
 
+  let assignedBatches = []; // Array to hold assigned batches
+  let completedBatches = []; // Array to hold completed batches
+
+  // Function to display the batch status
+  function displayBatchStatus(assigned, completed, current) {
+    const batchStatusDiv = document.getElementById("batch-status");
+    if (!batchStatusDiv) return;
+
+    batchStatusDiv.innerHTML = "<h2>Batch Status</h2>"; // Clear and add title
+
+    const totalAssigned = assigned.length;
+    const totalCompleted = completed.length;
+    const totalRemaining = totalAssigned - totalCompleted;
+
+    let statusText = `Done ${totalCompleted} out of ${totalAssigned} batches.`;
+
+    if (current !== null && totalCompleted < totalAssigned) {
+      statusText += ` Currently on batch ${current}.`;
+      if (totalRemaining > 1) {
+        statusText += ` Still ${totalRemaining} batches to go.`;
+      } else if (totalRemaining === 1) {
+        statusText += ` Still ${totalRemaining} batch to go.`;
+      }
+    } else if (totalCompleted === totalAssigned && totalAssigned > 0) {
+      statusText = `All ${totalAssigned} batches completed. Thank you!`;
+    } else if (totalAssigned === 0) {
+      statusText = "No batches assigned.";
+    }
+
+    const statusParagraph = document.createElement("p");
+    statusParagraph.textContent = statusText;
+    batchStatusDiv.appendChild(statusParagraph);
+  }
+
   // Function to update the progress bar
   function updateProgressBar() {
     const progress = (currentConversationIndex + 1) / totalConversationsInBatch;
@@ -239,6 +273,13 @@ document.addEventListener("DOMContentLoaded", function () {
       totalConversationsInBatch = initialData.total_in_batch;
       currentBatch = initialData.current_batch;
       currentConversationIndex = 0; // Start with the first conversation
+
+      // Get assigned and completed batches from initial data
+      assignedBatches = initialData.assigned_batches || [];
+      completedBatches = initialData.completed_batches || [];
+
+      // Display batch status
+      displayBatchStatus(assignedBatches, completedBatches, currentBatch);
 
       if (totalConversationsInBatch > 0) {
         displayConversation(conversations[currentConversationIndex]);

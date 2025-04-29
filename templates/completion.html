@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Complete</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+</head>
+
+<body>
+    <div>
+        <h1>Survey Complete</h1>
+        <p>{{ message }}</p>
+        <p>Thank you for participating in the survey, {{ username }}!</p>
+    </div>
+</body>
+
+</html>
