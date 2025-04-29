@@ -168,14 +168,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
     currentConversationIndex++;
 
-    // Reset survey selections
+    // Reset survey selections and set default to "Strongly Disagree"
     const surveyQuestionsDiv = document.getElementById("survey-questions");
     if (surveyQuestionsDiv) {
-      const radioButtons = surveyQuestionsDiv.querySelectorAll(
-        'input[type="radio"]'
-      );
-      radioButtons.forEach((radio) => {
-        radio.checked = false;
+      const questionDivs = surveyQuestionsDiv.querySelectorAll(".question");
+      questionDivs.forEach((questionDiv) => {
+        const radioButtons = questionDiv.querySelectorAll(
+          'input[type="radio"]'
+        );
+        radioButtons.forEach((radio) => {
+          radio.checked = false; // Uncheck all first
+        });
+        // Check the "Strongly Disagree" option (value="1")
+        const stronglyDisagreeRadio = questionDiv.querySelector(
+          'input[type="radio"][value="1"]'
+        );
+        if (stronglyDisagreeRadio) {
+          stronglyDisagreeRadio.checked = true;
+        }
       });
     }
 
