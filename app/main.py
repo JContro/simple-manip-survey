@@ -86,7 +86,7 @@ class Conversation(BaseModel):
 
 class AssignBatchData(BaseModel):
     username: str
-    batch: int
+    batches: List[int]
 
 
 class EmailData(BaseModel):
@@ -231,10 +231,15 @@ async def reset_conversations():
 
 @app.post("/assign_batch")
 async def assign_batch_endpoint(assign_batch_data: AssignBatchData):
-    """Receives a username and batch number and assigns the batch to the user."""
-    result = assign_batch_to_user(
-        assign_batch_data.username, assign_batch_data.batch)
-    return result
+    """Receives a username and a list of batch numbers and assigns the batches to the user."""
+    if not username_exists(assign_batch_data.username):
+        return {"status": "error", "message": f"User '{assign_batch_data.username}' not found."}
+
+    results = []
+    for batch in assign_batch_data.batches:
+        result = assign_batch_to_user(assign_batch_data.username, batch)
+        results.append(result)
+    return results
 
 
 @app.post("/submit_survey")
