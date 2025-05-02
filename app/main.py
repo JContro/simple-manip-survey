@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses, add_completed_batch_to_user, get_user_by_username
+from app.services.firestore import db, get_emails, save_email, email_exists, get_users, username_exists, save_conversation, get_conversations, delete_all_conversations, assign_batch_to_user, get_conversations_by_username, get_user_batch, save_survey_response, get_survey_responses, add_completed_batch_to_user, get_user_by_username, get_survey_responses_by_username
 import datetime
 
 app = FastAPI()
@@ -280,6 +280,13 @@ async def complete_batch_endpoint(complete_batch_data: CompleteBatchData):
     """Receives a username and batch number and adds the batch to the user's completed batches."""
     result = add_completed_batch_to_user(
         complete_batch_data.username, complete_batch_data.batch)
+    return result
+
+
+@app.get("/completed_surveys/{username}")
+async def read_completed_surveys(username: str):
+    """Retrieves all completed survey responses for a specific user from Firestore."""
+    result = get_survey_responses_by_username(username)
     return result
 
 

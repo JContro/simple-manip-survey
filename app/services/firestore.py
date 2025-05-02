@@ -328,5 +328,23 @@ def get_survey_responses():
         return {"status": "error", "message": str(e)}
 
 
+def get_survey_responses_by_username(username: str):
+    """Retrieves all survey responses for a specific user from the 'survey_responses' collection in Firestore."""
+    try:
+        survey_responses_collection = db.collection("survey_responses")
+        query = survey_responses_collection.where("username", "==", username)
+        docs = query.stream()
+        survey_responses_list = []
+        for doc in docs:
+            survey_responses_list.append(doc.to_dict())
+        print(
+            f"Retrieved {len(survey_responses_list)} survey responses for user '{username}' from Firestore")
+        return {"status": "success", "data": survey_responses_list}
+    except Exception as e:
+        print(
+            f"Error retrieving survey responses for user '{username}' from Firestore: {e}")
+        return {"status": "error", "message": str(e)}
+
+
 # Initialize client when the module is imported
 db = get_firestore_client()
