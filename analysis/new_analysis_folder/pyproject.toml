@@ -8,6 +8,9 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 firebase-admin = "^6.8.0"
+pandas = "^2.2.3"
+seaborn = "^0.13.2"
+scikit-learn = "^1.6.1"
 
 
 [build-system]

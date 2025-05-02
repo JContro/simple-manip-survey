@@ -1,0 +1,19 @@
+2025-05-02 16:29:02,839 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 16:29:03,519 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 16:29:03,519 - INFO - Starting data analysis
+2025-05-02 16:30:17,864 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 16:30:18,433 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 16:30:18,433 - INFO - Starting data analysis
+2025-05-02 16:30:18,445 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 16:30:18,446 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 16:30:46,062 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 16:30:46,613 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 16:30:46,613 - INFO - Starting data analysis
+2025-05-02 16:30:46,622 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 16:30:46,622 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 16:31:11,179 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 16:31:11,723 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 16:31:11,723 - INFO - Starting data analysis
+2025-05-02 16:31:11,732 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 16:31:11,732 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 16:31:12,640 - INFO - Firestore data analysis pipeline completed (transformation pending)
