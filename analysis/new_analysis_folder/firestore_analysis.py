@@ -30,42 +30,6 @@ def setup_logging() -> logging.Logger:
     return logging.getLogger(__name__)
 
 
-def handle_data_files(logger: logging.Logger, download_flag: bool = False) -> Dict[str, Union[dict, pd.DataFrame]]:
-    """Handle data files and convert to appropriate format."""
-    data_folder = Path('data')
-    data_folder.mkdir(exist_ok=True)
-
-    files = {
-        'manipulation_definitions': 'manipulation-definitions.json',
-        'conversations': 'conversations.json',
-        'human_responses': 'human_responses.json',
-        'user_scores': 'user_scores.json',
-        'user_timing': 'user_timing.json'
-    }
-
-    if download_flag:
-        logger.info("Downloading files from GCS bucket")
-        from data_connection import create_gcs_file_handler
-        file_handler = create_gcs_file_handler('manipulation-dataset-kcl')
-
-        for filename in files.values():
-            data = file_handler(filename)
-            with open(data_folder / filename, 'w') as f:
-                json.dump(data, f)
-            logger.debug(f"Downloaded and saved {filename}")
-
-    data = {}
-    for key, filename in files.items():
-        try:
-            data[key] = json.load(open(data_folder / filename))
-            logger.debug(f"Loaded {filename}")
-        except Exception as e:
-            logger.error(f"Error loading {filename}: {str(e)}")
-            raise
-
-    return data
-
-
 def calculate_statistics(row: pd.Series, manipulation_cols: List[str]) -> Tuple[float, float]:
     """Calculate variance and mean score for a row of manipulation scores."""
     scores = []
@@ -987,6 +951,10 @@ def analyze_data(analytics_df: pd.DataFrame, logger: logging.Logger) -> None:
     # logger.info("Data analysis pipeline completed successfully")
 
     data = analyze_manipulation_by_category(analytics_df, logger=logger)
+
+    logger.info(f"Keys in data dictionary for heatmap: {data.keys()}")
+    import pdb
+    pdb.set_trace()
 
     fig, ax = create_manipulation_tactics_heatmap(
         data,

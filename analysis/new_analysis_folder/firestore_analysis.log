@@ -17,3 +17,16 @@
 2025-05-02 16:31:11,732 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
 2025-05-02 16:31:11,732 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
 2025-05-02 16:31:12,640 - INFO - Firestore data analysis pipeline completed (transformation pending)
+2025-05-02 17:04:41,753 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:04:42,382 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 17:04:42,383 - INFO - Starting data analysis
+2025-05-02 17:04:42,393 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:04:42,393 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:04:42,399 - INFO - Keys in data dictionary for heatmap: dict_keys(['Guilt-Tripping', 'Reciprocity Pressure', 'Emotional Blackmail', 'Negging', 'Fear Enhancement', 'Peer Pressure', 'Gaslighting', 'helpful', 'strong'])
+2025-05-02 17:04:42,837 - INFO - Firestore data analysis pipeline completed (transformation pending)
+2025-05-02 17:05:13,319 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:05:13,884 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 17:05:13,884 - INFO - Starting data analysis
+2025-05-02 17:05:13,893 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:05:13,894 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:05:13,899 - INFO - Keys in data dictionary for heatmap: dict_keys(['Negging', 'Emotional Blackmail', 'Gaslighting', 'Reciprocity Pressure', 'Fear Enhancement', 'Guilt-Tripping', 'Peer Pressure', 'strong', 'helpful'])
