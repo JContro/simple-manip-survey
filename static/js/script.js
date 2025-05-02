@@ -50,6 +50,16 @@ document.addEventListener("DOMContentLoaded", function () {
     batchStatusDiv.appendChild(statusParagraph);
   }
 
+  // Function to display the total number of completed responses
+  function displayTotalCompletedResponses(totalCompleted) {
+    const totalCompletedElement = document.getElementById(
+      "total-completed-responses"
+    );
+    if (totalCompletedElement) {
+      totalCompletedElement.textContent = `Total Completed Responses: ${totalCompleted}`;
+    }
+  }
+
   // Function to update the progress bar
   function updateProgressBar() {
     const progress = (currentConversationIndex + 1) / totalConversationsInBatch;
@@ -275,8 +285,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (initialDataElement) {
       const initialData = JSON.parse(initialDataElement.textContent);
       username = initialData.username;
-      conversations = initialData.conversations; // Get all conversations
-      totalConversationsInBatch = initialData.total_in_batch;
+      let allConversations = initialData.conversations; // Get all conversations for the batch
       currentBatch = initialData.current_batch;
       currentConversationIndex = 0; // Start with the first conversation
 
@@ -284,38 +293,155 @@ document.addEventListener("DOMContentLoaded", function () {
       assignedBatches = initialData.assigned_batches || [];
       completedBatches = initialData.completed_batches || [];
 
-      // Display batch status
-      displayBatchStatus(assignedBatches, completedBatches, currentBatch);
+      // Fetch completed surveys for the user
+      fetch(`/completed_surveys/${username}`)
+        .then((response) => response.json())
+        .then((completedSurveysResult) => {
+          if (completedSurveysResult.status === "success") {
+            const completedConversationUuids = completedSurveysResult.data.map(
+              (response) => response.conversation_uuid
+            );
 
-      if (totalConversationsInBatch > 0) {
-        displayConversation(conversations[currentConversationIndex]);
-        updateProgressBar();
+            // Filter out conversations that have already been completed by the user
+            conversations = allConversations.filter(
+              (conversation) =>
+                !completedConversationUuids.includes(conversation.uuid)
+            );
 
-        // Add event listeners
-        nextButton.addEventListener("click", displayNextConversation);
-        backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
-        completeBatchButton.addEventListener("click", completeBatch); // Add listener for complete batch button
+            totalConversationsInBatch = conversations.length;
 
-        // Initially hide back button and disable next button
-        backButton.style.display = "none";
-        nextButton.disabled = true;
+            // Display batch status (can be updated later to include total completed responses)
+            displayBatchStatus(assignedBatches, completedBatches, currentBatch);
 
-        // Add event listeners to survey radio buttons
-        const surveyQuestionsDiv = document.getElementById("survey-questions");
-        if (surveyQuestionsDiv) {
-          surveyQuestionsDiv.addEventListener("change", checkSurveyCompletion);
-        }
+            // Display total completed responses
+            displayTotalCompletedResponses(completedSurveysResult.data.length);
 
-        // Initial check for survey completion
-        checkSurveyCompletion();
-      } else {
-        conversationContainer.innerHTML =
-          "<p>No conversations found for this batch.</p>";
-        nextButton.style.display = "none";
-        backButton.style.display = "none"; // Also hide back button if no conversations
-        progressText.textContent = `Batch ${currentBatch}`;
-        progressBar.style.width = "0%";
-      }
+            if (totalConversationsInBatch > 0) {
+              displayConversation(conversations[currentConversationIndex]);
+              updateProgressBar();
+
+              // Add event listeners
+              nextButton.addEventListener("click", displayNextConversation);
+              backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
+              completeBatchButton.addEventListener("click", completeBatch); // Add listener for complete batch button
+
+              // Initially hide back button and disable next button
+              backButton.style.display = "none";
+              nextButton.disabled = true;
+
+              // Add event listeners to survey radio buttons
+              const surveyQuestionsDiv =
+                document.getElementById("survey-questions");
+              if (surveyQuestionsDiv) {
+                surveyQuestionsDiv.addEventListener(
+                  "change",
+                  checkSurveyCompletion
+                );
+              }
+
+              // Initial check for survey completion
+              checkSurveyCompletion();
+            } else {
+              conversationContainer.innerHTML =
+                "<p>You have completed all conversations in this batch.</p>";
+              nextButton.style.display = "none";
+              backButton.style.display = "none"; // Also hide back button if no conversations
+              progressText.textContent = `Batch ${currentBatch}`;
+              progressBar.style.width = "100%"; // Indicate batch is fully processed
+              completeBatchButton.style.display = "inline-block"; // Show complete batch button if all are done
+            }
+          } else {
+            console.error(
+              "Failed to fetch completed surveys:",
+              completedSurveysResult.message
+            );
+            // Proceed with all conversations if fetching completed surveys fails
+            conversations = allConversations;
+            totalConversationsInBatch = conversations.length;
+            // Display batch status (can be updated later to include total completed responses)
+            displayBatchStatus(assignedBatches, completedBatches, currentBatch);
+            // Display total completed responses (0 if fetch failed)
+            displayTotalCompletedResponses(0);
+
+            if (totalConversationsInBatch > 0) {
+              displayConversation(conversations[currentConversationIndex]);
+              updateProgressBar();
+
+              // Add event listeners
+              nextButton.addEventListener("click", displayNextConversation);
+              backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
+              completeBatchButton.addEventListener("click", completeBatch); // Add listener for complete batch button
+
+              // Initially hide back button and disable next button
+              backButton.style.display = "none";
+              nextButton.disabled = true;
+
+              // Add event listeners to survey radio buttons
+              const surveyQuestionsDiv =
+                document.getElementById("survey-questions");
+              if (surveyQuestionsDiv) {
+                surveyQuestionsDiv.addEventListener(
+                  "change",
+                  checkSurveyCompletion
+                );
+              }
+
+              // Initial check for survey completion
+              checkSurveyCompletion();
+            } else {
+              conversationContainer.innerHTML =
+                "<p>No conversations found for this batch.</p>";
+              nextButton.style.display = "none";
+              backButton.style.display = "none"; // Also hide back button if no conversations
+              progressText.textContent = `Batch ${currentBatch}`;
+              progressBar.style.width = "0%";
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching completed surveys:", error);
+          // Proceed with all conversations if fetching completed surveys fails
+          conversations = allConversations;
+          totalConversationsInBatch = conversations.length;
+          // Display batch status (can be updated later to include total completed responses)
+          displayBatchStatus(assignedBatches, completedBatches, currentBatch);
+          // Display total completed responses (0 if fetch failed)
+          displayTotalCompletedResponses(0);
+
+          if (totalConversationsInBatch > 0) {
+            displayConversation(conversations[currentConversationIndex]);
+            updateProgressBar();
+
+            // Add event listeners
+            nextButton.addEventListener("click", displayNextConversation);
+            backButton.addEventListener("click", displayPreviousConversation); // Add listener for back button
+            completeBatchButton.addEventListener("click", completeBatch); // Add listener for complete batch button
+
+            // Initially hide back button and disable next button
+            backButton.style.display = "none";
+            nextButton.disabled = true;
+
+            // Add event listeners to survey radio buttons
+            const surveyQuestionsDiv =
+              document.getElementById("survey-questions");
+            if (surveyQuestionsDiv) {
+              surveyQuestionsDiv.addEventListener(
+                "change",
+                checkSurveyCompletion
+              );
+            }
+
+            // Initial check for survey completion
+            checkSurveyCompletion();
+          } else {
+            conversationContainer.innerHTML =
+              "<p>No conversations found for this batch.</p>";
+            nextButton.style.display = "none";
+            backButton.style.display = "none"; // Also hide back button if no conversations
+            progressText.textContent = `Batch ${currentBatch}`;
+            progressBar.style.width = "0%";
+          }
+        });
     } else {
       console.error("Initial survey data not found in the HTML.");
       conversationContainer.innerHTML =
