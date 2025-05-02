@@ -30,3 +30,39 @@
 2025-05-02 17:05:13,893 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
 2025-05-02 17:05:13,894 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
 2025-05-02 17:05:13,899 - INFO - Keys in data dictionary for heatmap: dict_keys(['Negging', 'Emotional Blackmail', 'Gaslighting', 'Reciprocity Pressure', 'Fear Enhancement', 'Guilt-Tripping', 'Peer Pressure', 'strong', 'helpful'])
+2025-05-02 17:10:04,395 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:10:04,994 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 17:10:04,994 - INFO - Starting data analysis
+2025-05-02 17:10:05,003 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:10:05,003 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:10:05,009 - INFO - Keys in data dictionary for heatmap: dict_keys(['Fear Enhancement', 'Negging', 'Peer Pressure', 'Reciprocity Pressure', 'Emotional Blackmail', 'Guilt-Tripping', 'Gaslighting', 'helpful', 'strong'])
+2025-05-02 17:10:08,513 - INFO - Firestore data analysis pipeline completed (transformation pending)
+2025-05-02 17:12:28,356 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:13:03,388 - INFO - Created merged analytics_df with shape: (746, 26)
+2025-05-02 17:13:03,390 - INFO - Starting data analysis
+2025-05-02 17:13:03,413 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:13:03,414 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:13:03,423 - INFO - Keys in data dictionary for heatmap: dict_keys(['Negging', 'Peer Pressure', 'Guilt-Tripping', 'Reciprocity Pressure', 'Gaslighting', 'Emotional Blackmail', 'Fear Enhancement', 'strong', 'helpful'])
+2025-05-02 17:13:04,432 - INFO - Firestore data analysis pipeline completed (transformation pending)
+2025-05-02 17:13:09,199 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:13:17,193 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:13:19,623 - INFO - Created merged analytics_df with shape: (32, 26)
+2025-05-02 17:13:19,623 - INFO - Starting data analysis
+2025-05-02 17:13:19,632 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:13:19,633 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:13:19,637 - INFO - Keys in data dictionary for heatmap: dict_keys(['Reciprocity Pressure', 'Peer Pressure', 'Gaslighting', 'Guilt-Tripping', 'Negging', 'Emotional Blackmail', 'strong', 'helpful'])
+2025-05-02 17:14:47,135 - INFO - Starting Firestore data analysis pipeline
+2025-05-02 17:14:47,685 - INFO - Created merged analytics_df with shape: (32, 26)
+2025-05-02 17:14:47,685 - INFO - Starting data analysis
+2025-05-02 17:14:47,692 - INFO - Classification metrics - Accuracy: 0.75, Recall: 0.82
+2025-05-02 17:14:47,692 - INFO - Variance statistics - Mean: 0.55, Median: 0.00, Variance of variance: 3.72
+2025-05-02 17:14:47,696 - INFO - Keys in data dictionary for heatmap: dict_keys(['Emotional Blackmail', 'Gaslighting', 'Peer Pressure', 'Guilt-Tripping', 'Negging', 'Reciprocity Pressure', 'strong', 'helpful'])
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'emotional_blackmail_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'fear_enhancement_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'gaslighting_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'general_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'guilt_tripping_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'negging_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'peer_pressure_mean'. Skipping.
+2025-05-02 17:14:47,696 - WARNING - Missing data or zero length for category 'Fear Enhancement' and metric 'reciprocity_mean'. Skipping.
+2025-05-02 17:14:48,078 - INFO - Firestore data analysis pipeline completed (transformation pending)

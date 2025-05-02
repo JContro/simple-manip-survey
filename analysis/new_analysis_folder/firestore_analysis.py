@@ -830,8 +830,22 @@ def create_manipulation_tactics_heatmap(data, figsize=(12, 8), cmap='YlOrRd',
     for cat in categories:
         row = []
         for metric in metrics:
-            # Divide by len to normalize
-            value = data[cat][metric] / data[cat]['len']
+            value = np.nan  # Default to NaN if data is missing
+            if cat in data and metric in data[cat] and 'len' in data[cat] and data[cat]['len'] != 0:
+                try:
+                    # Divide by len to normalize
+                    value = data[cat][metric] / data[cat]['len']
+                except KeyError as e:
+                    # This specific KeyError should be caught by the outer if, but keeping for safety
+                    logger.warning(
+                        f"KeyError accessing data for category '{cat}' and metric '{metric}': {e}")
+                except Exception as e:
+                    logger.warning(
+                        f"An unexpected error occurred processing data for category '{cat}' and metric '{metric}': {e}")
+            else:
+                logger.warning(
+                    f"Missing data or zero length for category '{cat}' and metric '{metric}'. Skipping.")
+
             row.append(value)
         data_matrix.append(row)
 
@@ -953,8 +967,6 @@ def analyze_data(analytics_df: pd.DataFrame, logger: logging.Logger) -> None:
     data = analyze_manipulation_by_category(analytics_df, logger=logger)
 
     logger.info(f"Keys in data dictionary for heatmap: {data.keys()}")
-    import pdb
-    pdb.set_trace()
 
     fig, ax = create_manipulation_tactics_heatmap(
         data,
@@ -1047,7 +1059,7 @@ if __name__ == "__main__":
     conversations_df.set_index('uuid', inplace=True)
 
     # Merge DataFrames
-    analytics_df = conversations_df.join(aggregated_responses_df, how='left')
+    analytics_df = conversations_df.join(aggregated_responses_df, how='inner')
 
     logger.info(
         f"Created merged analytics_df with shape: {analytics_df.shape}")
