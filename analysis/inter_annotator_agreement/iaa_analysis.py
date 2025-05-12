@@ -70,7 +70,8 @@ def perform_iaa_analysis(conversations):
                 # Item is conversation_id + manipulative type, category is the rating
                 annotations.append(
                     (annotator, f"{conversation_id}_{manip_type}", str(rating)))
-
+    import pdb
+    pdb.set_trace()
     if not annotations:
         print("No annotation data found to perform analysis.")
         return
@@ -115,7 +116,7 @@ def perform_iaa_analysis(conversations):
     for annotator, item, category in annotations:
         try:
             score = int(category)
-            binary_score = '1' if score >= 4 else '0'
+            binary_score = '1' if score > 4 else '0'
             binary_annotations.append((annotator, item, binary_score))
         except ValueError:
             # Handle cases where category is not a valid integer
