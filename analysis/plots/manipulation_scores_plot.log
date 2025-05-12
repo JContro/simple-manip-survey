@@ -42,3 +42,95 @@
 2025-05-12 22:14:32,407 - INFO - Looking for row name: Negging
 2025-05-12 22:14:33,294 - INFO - Plots created and saved successfully.
 2025-05-12 22:14:33,296 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:41:48,962 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:41:48,962 - INFO - Loading data from Firestore...
+2025-05-12 22:41:50,498 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:41:50,499 - INFO - Creating manipulation scores plot...
+2025-05-12 22:41:50,537 - INFO - DataFrame columns after renaming: ['peer_pressure', 'reciprocity', 'gaslighting', 'guilt_tripping', 'emotional_blackmail', 'general', 'fear_enhancement', 'negging', 'len']
+2025-05-12 22:41:50,537 - INFO - DataFrame index after renaming: ['Guilt-Tripping', 'Gaslighting', 'Negging', 'Reciprocity Pressure', 'Emotional Blackmail', 'Fear Enhancement', 'Peer Pressure', 'strong', 'helpful']
+2025-05-12 22:41:50,542 - INFO - Sample of final_df after renaming:
+                      peer_pressure  reciprocity  gaslighting  ...  fear_enhancement  negging  len
+Guilt-Tripping                   15            3           26  ...                26       21   48
+Gaslighting                       1            5           47  ...                17       20   48
+Negging                          16            4           29  ...                19       29   46
+Reciprocity Pressure              1           32           13  ...                10        1   50
+Emotional Blackmail              14            3           14  ...                18        8   31
+
+[5 rows x 9 columns]
+2025-05-12 22:41:50,546 - INFO - DataFrame index before populating 'requested specific manipulation': ['Guilt-Tripping', 'Gaslighting', 'Negging', 'Reciprocity Pressure', 'Emotional Blackmail', 'Fear Enhancement', 'Peer Pressure', 'persuasion', 'helpful', 'average of other requested manipulation types']
+2025-05-12 22:41:50,546 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:41:50,546 - INFO - Looking for row name: Reciprocity Pressure
+2025-05-12 22:41:50,546 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:41:50,547 - INFO - Looking for row name: Guilt-Tripping
+2025-05-12 22:41:50,547 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:41:50,547 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:41:50,547 - INFO - Looking for row name: Negging
+2025-05-12 22:41:51,127 - INFO - Starting generation of persuasion vs helpful plot...
+2025-05-12 22:41:51,127 - INFO - Rows of interest for persuasion plot: ['persuasion', 'helpful']
+2025-05-12 22:41:51,127 - INFO - Manipulation types (columns) for persuasion plot: ['manipulative (in general)', 'peer_pressure', 'reciprocity', 'gaslighting', 'guilt_tripping', 'emotional_blackmail', 'fear_enhancement', 'negging']
+2025-05-12 22:41:51,132 - INFO - Selected DataFrame for persuasion plot:
+            manipulative (in general)  peer_pressure  ...  fear_enhancement  negging
+persuasion                      81.82           3.64  ...             38.18    10.91
+helpful                         12.73           0.00  ...              3.64     0.00
+
+[2 rows x 8 columns]
+2025-05-12 22:42:36,801 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:42:36,801 - INFO - Loading data from Firestore...
+2025-05-12 22:42:38,303 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:42:38,305 - INFO - Creating manipulation scores plot...
+2025-05-12 22:42:38,340 - INFO - DataFrame columns after renaming: ['peer_pressure', 'reciprocity', 'gaslighting', 'guilt_tripping', 'emotional_blackmail', 'general', 'fear_enhancement', 'negging', 'len']
+2025-05-12 22:42:38,340 - INFO - DataFrame index after renaming: ['Guilt-Tripping', 'Fear Enhancement', 'Negging', 'Gaslighting', 'Reciprocity Pressure', 'Emotional Blackmail', 'Peer Pressure', 'strong', 'helpful']
+2025-05-12 22:42:38,344 - INFO - Sample of final_df after renaming:
+                      peer_pressure  reciprocity  gaslighting  ...  fear_enhancement  negging  len
+Guilt-Tripping                   15            3           26  ...                26       21   48
+Fear Enhancement                  7            5           23  ...                32        7   43
+Negging                          16            4           29  ...                19       29   46
+Gaslighting                       1            5           47  ...                17       20   48
+Reciprocity Pressure              1           32           13  ...                10        1   50
+
+[5 rows x 9 columns]
+2025-05-12 22:42:38,347 - INFO - DataFrame index before populating 'requested specific manipulation': ['Guilt-Tripping', 'Fear Enhancement', 'Negging', 'Gaslighting', 'Reciprocity Pressure', 'Emotional Blackmail', 'Peer Pressure', 'persuasion', 'helpful', 'average of other requested manipulation types']
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Reciprocity Pressure
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Guilt-Tripping
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:42:38,347 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:42:38,348 - INFO - Looking for row name: Negging
+2025-05-12 22:42:38,921 - INFO - Starting generation of persuasion vs helpful plot...
+2025-05-12 22:42:38,921 - INFO - Rows of interest for persuasion plot: ['persuasion', 'helpful']
+2025-05-12 22:42:38,921 - INFO - Manipulation types (columns) for persuasion plot: ['manipulative (in general)', 'peer_pressure', 'reciprocity', 'gaslighting', 'guilt_tripping', 'emotional_blackmail', 'fear_enhancement', 'negging']
+2025-05-12 22:42:38,925 - INFO - Selected DataFrame for persuasion plot:
+            manipulative (in general)  peer_pressure  ...  fear_enhancement  negging
+persuasion                      81.82           3.64  ...             38.18    10.91
+helpful                         12.73           0.00  ...              3.64     0.00
+
+[2 rows x 8 columns]
+2025-05-12 22:42:39,218 - INFO - Plots created and saved successfully.
+2025-05-12 22:42:39,221 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:44:44,591 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:44:44,591 - INFO - Loading data from Firestore...
+2025-05-12 22:44:45,919 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:44:45,920 - INFO - Creating manipulation scores plot...
+2025-05-12 22:44:45,960 - INFO - DataFrame index before populating 'requested specific manipulation': ['Reciprocity Pressure', 'Fear Enhancement', 'Negging', 'Gaslighting', 'Peer Pressure', 'Guilt-Tripping', 'Emotional Blackmail', 'helpful', 'persuasion', 'average of other requested manipulation types']
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Reciprocity Pressure
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Guilt-Tripping
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:44:45,960 - INFO - Looking for row name: Negging
+2025-05-12 22:44:46,820 - INFO - Plots created and saved successfully.
+2025-05-12 22:44:46,822 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:45:26,284 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:45:26,285 - INFO - Loading data from Firestore...
+2025-05-12 22:45:27,539 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:45:27,541 - INFO - Creating manipulation scores plot...
+2025-05-12 22:45:27,581 - INFO - DataFrame index before populating 'requested specific manipulation': ['Fear Enhancement', 'Peer Pressure', 'Guilt-Tripping', 'Emotional Blackmail', 'Negging', 'Reciprocity Pressure', 'Gaslighting', 'helpful', 'persuasion', 'average of other requested manipulation types']
+2025-05-12 22:45:27,581 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:45:27,581 - INFO - Looking for row name: Reciprocity Pressure
+2025-05-12 22:45:27,582 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:45:27,582 - INFO - Looking for row name: Guilt-Tripping
+2025-05-12 22:45:27,582 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:45:27,582 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:45:27,582 - INFO - Looking for row name: Negging
