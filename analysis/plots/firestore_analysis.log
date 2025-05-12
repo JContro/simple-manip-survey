@@ -73,3 +73,10 @@
 2025-05-12 16:54:09,323 - INFO - Variance statistics - Mean: 0.20, Median: 0.00, Variance of variance: 0.78
 2025-05-12 16:54:09,328 - INFO - Keys in data dictionary for heatmap: dict_keys(['Gaslighting', 'Fear Enhancement', 'Reciprocity Pressure', 'Emotional Blackmail', 'Guilt-Tripping', 'Negging', 'Peer Pressure', 'helpful', 'strong'])
 2025-05-12 16:54:09,742 - INFO - Firestore data analysis pipeline completed (transformation pending)
+2025-05-12 17:37:01,022 - INFO - Starting Firestore data analysis pipeline
+2025-05-12 17:37:01,648 - INFO - Created merged analytics_df with shape: (405, 26)
+2025-05-12 17:37:01,648 - INFO - Starting data analysis
+2025-05-12 17:37:01,688 - INFO - Classification metrics - Accuracy: 0.79, Recall: 0.88
+2025-05-12 17:37:01,689 - INFO - Variance statistics - Mean: 0.20, Median: 0.00, Variance of variance: 0.77
+2025-05-12 17:37:01,693 - INFO - Keys in data dictionary for heatmap: dict_keys(['Fear Enhancement', 'Gaslighting', 'Peer Pressure', 'Negging', 'Emotional Blackmail', 'Reciprocity Pressure', 'Guilt-Tripping', 'helpful', 'strong'])
+2025-05-12 17:37:02,095 - INFO - Firestore data analysis pipeline completed (transformation pending)
