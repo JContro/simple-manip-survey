@@ -4,3 +4,41 @@
 2025-05-12 17:29:52,368 - INFO - Creating manipulation scores plot...
 2025-05-12 17:29:53,880 - INFO - Plots created and saved successfully.
 2025-05-12 17:29:53,884 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:10:07,937 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:10:07,938 - INFO - Loading data from Firestore...
+2025-05-12 22:10:09,454 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:10:09,455 - INFO - Creating manipulation scores plot...
+2025-05-12 22:10:10,392 - INFO - Plots created and saved successfully.
+2025-05-12 22:10:10,396 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:13:41,812 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:13:41,812 - INFO - Loading data from Firestore...
+2025-05-12 22:13:43,072 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:13:43,074 - INFO - Creating manipulation scores plot...
+2025-05-12 22:13:43,113 - INFO - DataFrame index before populating 'requested specific manipulation': ['Emotional Blackmail', 'Negging', 'Reciprocity Pressure', 'Guilt-Tripping', 'Gaslighting', 'Peer Pressure', 'Fear Enhancement', 'persuasion', 'helpful', 'average of other requested manipulation types']
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Reciprocity
+2025-05-12 22:13:43,113 - WARNING - Row name 'Reciprocity' not found in DataFrame index.
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Guilt Tripping
+2025-05-12 22:13:43,113 - WARNING - Row name 'Guilt Tripping' not found in DataFrame index.
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Manipulative (In General)
+2025-05-12 22:13:43,113 - WARNING - Row name 'Manipulative (In General)' not found in DataFrame index.
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:13:43,113 - INFO - Looking for row name: Negging
+2025-05-12 22:13:44,007 - INFO - Plots created and saved successfully.
+2025-05-12 22:13:44,009 - INFO - Manipulation scores plot generation completed.
+2025-05-12 22:14:31,045 - INFO - Starting manipulation scores plot generation...
+2025-05-12 22:14:31,046 - INFO - Loading data from Firestore...
+2025-05-12 22:14:32,365 - INFO - Created merged analytics_df with shape: (426, 26)
+2025-05-12 22:14:32,366 - INFO - Creating manipulation scores plot...
+2025-05-12 22:14:32,406 - INFO - DataFrame index before populating 'requested specific manipulation': ['Negging', 'Fear Enhancement', 'Reciprocity Pressure', 'Peer Pressure', 'Gaslighting', 'Guilt-Tripping', 'Emotional Blackmail', 'persuasion', 'helpful', 'average of other requested manipulation types']
+2025-05-12 22:14:32,406 - INFO - Looking for row name: Peer Pressure
+2025-05-12 22:14:32,406 - INFO - Looking for row name: Reciprocity Pressure
+2025-05-12 22:14:32,406 - INFO - Looking for row name: Gaslighting
+2025-05-12 22:14:32,406 - INFO - Looking for row name: Guilt-Tripping
+2025-05-12 22:14:32,407 - INFO - Looking for row name: Emotional Blackmail
+2025-05-12 22:14:32,407 - INFO - Looking for row name: Fear Enhancement
+2025-05-12 22:14:32,407 - INFO - Looking for row name: Negging
+2025-05-12 22:14:33,294 - INFO - Plots created and saved successfully.
+2025-05-12 22:14:33,296 - INFO - Manipulation scores plot generation completed.

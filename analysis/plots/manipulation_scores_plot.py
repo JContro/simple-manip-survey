@@ -220,13 +220,28 @@ def create_manipulation_scores_plot(analytics_df):
     # Initialize the new row with zeros
     prompted_row = pd.Series(0, index=final_df.columns)
 
+    logger.info(
+        f"DataFrame index before populating 'requested specific manipulation': {final_df.index.tolist()}")
+
     # For each manipulation type column (excluding '_std' and 'len')
     for col in final_df.columns:
-        if not col.endswith('_std') and col != 'len':
+        # Exclude '_std' columns, 'len', and 'manipulative (in general)' column
+        if not col.endswith('_std') and col != 'len' and col != 'manipulative (in general)':
             # Find the corresponding row (need to match case and format)
             row_name = col.title().replace('_', ' ')  # Adjust format to match row names
+
+            # Special handling for specific manipulation types with different row names
+            if col == 'reciprocity':
+                row_name = 'Reciprocity Pressure'
+            elif col == 'guilt_tripping':
+                row_name = 'Guilt-Tripping'
+
+            logger.info(f"Looking for row name: {row_name}")
             if row_name in final_df.index:
                 prompted_row[col] = final_df.loc[row_name, col]
+            else:
+                logger.warning(
+                    f"Row name '{row_name}' not found in DataFrame index.")
 
     # Add the new row to final_df
     final_df.loc['requested specific manipulation'] = prompted_row
