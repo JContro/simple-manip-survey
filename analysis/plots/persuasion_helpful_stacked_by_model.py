@@ -38,6 +38,11 @@ def count_high_manipulation_scores(dataframe):
         dataframe[mean_col] = dataframe[col].apply(
             lambda x: np.mean(x) if isinstance(x, list) and x else np.nan)
 
+        # Log raw scores for specific manipulation types
+        if col in ['peer_pressure', 'emotional_blackmail']:
+            logger.info(
+                f"Manipulation Type: {col}, Raw scores: {dataframe[col].tolist()}")
+
     # Now count high scores using the mean columns
     manipulation_score_columns = [
         f'{col}_mean' for col in manipulation_columns]
@@ -289,6 +294,16 @@ def create_persuasion_helpful_stacked_by_model_plot(analytics_df):
         if strong_data.empty or helpful_data.empty:
             logger.warning(f"Missing data for model {model}. Skipping.")
             continue
+
+        # Log helpful data for specific manipulation types
+        if not helpful_data.empty:
+            for manipulation_type in ['peer_pressure', 'emotional_blackmail']:
+                if manipulation_type in helpful_data.columns:
+                    logger.info(
+                        f"Model: {model}, Helpful data for {manipulation_type}: {helpful_data[manipulation_type].iloc[0]}")
+                else:
+                    logger.info(
+                        f"Model: {model}, {manipulation_type} not found in helpful_data columns.")
 
         strong_values = strong_data[manipulation_types].iloc[0]
         helpful_values = helpful_data[manipulation_types].iloc[0]
