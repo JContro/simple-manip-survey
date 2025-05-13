@@ -1,187 +1,122 @@
-from firebase_admin import firestore
-from firebase_admin import credentials
-import firebase_admin
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import os
-import json
+"""I want to create a script that gets the data from firestore and then calculates the metrics as such
 
-# Initialize Firebase Admin SDK if not already initialized
-if not firebase_admin._apps:
-    # Path to the service account key relative to the workspace root
-    cred_path = "../../iac/service-account-key.json"
-    cred = credentials.Certificate(cred_path)
-    firebase_admin.initialize_app(cred, {
-        'projectId': 'simple-manip-survey-250416',
-    })
+    It will first get data from the collections survey_responses and conversations (see annotation analysis on how to do so)
+    The it will prepare the data such that the annotated (y_true) are in the format: {uuid: [0,0,1..]} where 0 if the score is =< 4 and 1 if larger. The order of the manipulation tacticts matters and needs
+    to be consistent for y_true and y_pred. 
 
-db = firestore.client()
-
-# Define the directories containing the prediction files
-ZERO_SHOT_DIR = 'data/zero_shot'
-FEW_SHOT_DIR = 'data/few_shot'
-
-# Define the ordered list of manipulation tactics
-# This order will be used consistently for both predicted labels and actual labels
-MANIPULATION_TACTICS = [
-    "Guilt-Tripping",
-    "Peer Pressure",
-    "Reciprocity Pressure",
-    "Gaslighting",
-    "Emotional Blackmail",
-    "Fear Enhancement",
-    "Negging"
-]
+    The data for y_pred depends on the model
 
 
-def load_predictions(filepath):
+def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
     """
-    Loads predictions from a JSON file and processes them into binary format.
-
-    Returns:
-        dict: {conversation_id: [binary_values_for_each_tactic]}
-    """
-    with open(filepath, 'r') as f:
-        predictions_data = json.load(f)
-
-    processed_predictions = {}
-    for item in predictions_data:
-        conversation_id = item.get("conversation_id")
-        classification_str = item.get("classification", "{}")
-
-        # Handle various formats (some have markdown code blocks, etc.)
-        classification_str = classification_str.strip()
-        if classification_str.startswith("```"):
-            classification_str = classification_str.strip("```").strip()
-
-        try:
-            # Parse the classification JSON string
-            classification = json.loads(classification_str)
-            tactics = classification.get("manipulation_tactics", {})
-
-            # Create binary list in the defined order
-            binary_values = [1 if tactics.get(
-                tactic, False) else 0 for tactic in MANIPULATION_TACTICS]
-            processed_predictions[conversation_id] = binary_values
-        except json.JSONDecodeError:
-            # Skip entries with invalid JSON
-            print(f"There was an error in: {classification_str}")
-            continue
-
-    return processed_predictions
-
-
-def get_actual_labels():
-    """
-    Fetches actual labels from Firestore and converts them to binary format.
-
-    Returns:
-        dict: {conversation_uuid: [binary_values_for_each_tactic]}
-    """
-    try:
-        conversations_ref = db.collection("survey_responses")
-        docs = conversations_ref.stream()
-
-        actual_labels = {}
-        for doc in docs:
-            data = doc.to_dict()
-            conversation_uuid = data.get("conversation_uuid")
-            if conversation_uuid:
-                # Map from manipulation tactic to corresponding field name in Firestore
-                tactic_to_field = {
-                    "Guilt-Tripping": "manipulative_guilt",
-                    "Peer Pressure": "manipulative_peer",
-                    "Reciprocity Pressure": "manipulative_reciprocity",
-                    "Gaslighting": "manipulative_gaslighting",
-                    "Emotional Blackmail": "manipulative_emotional",
-                    "Fear Enhancement": "manipulative_fear",
-                    "Negging": "manipulative_negging"
-                }
-
-                # Create binary list in the defined order
-                binary_labels = []
-                for tactic in MANIPULATION_TACTICS:
-                    field_name = tactic_to_field.get(tactic)
-                    if field_name and field_name in data and data[field_name] is not None:
-                        binary_labels.append(1 if data[field_name] > 4 else 0)
-                    else:
-                        binary_labels.append(0)  # Default if data not present
-
-                actual_labels[conversation_uuid] = binary_labels
-
-        return actual_labels
-
-    except Exception as e:
-        return None
-
-
-def evaluate_predictions(predictions, actual_labels):
-    """
-    Evaluates predictions against actual labels using various metrics.
-
-    Args:
-        predictions: Dict of {conversation_id: [binary_values]}
-        actual_labels: Dict of {conversation_uuid: [binary_values]}
-
-    Returns:
-        dict: Dictionary with accuracy, precision, recall, and F1 scores
-    """
-    # Find common conversation IDs between predictions and actual labels
-    common_ids = set(predictions.keys()) & set(actual_labels.keys())
-
-    if not common_ids:
-        return None
-
-    # Prepare lists for evaluation
-    y_true = []
-    y_pred = []
-
-    for conv_id in common_ids:
-        y_true.extend(actual_labels[conv_id])
-        y_pred.extend(predictions[conv_id])
-
-    # Calculate metrics
-    metrics = {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred, zero_division=0),
-        "f1": f1_score(y_true, y_pred, zero_division=0)
+Calculate accuracy, precision, recall, and F1 score for multi-label classification.
+"""
+    y_true = y_true.astype(bool)
+    y_pred = y_pred.astype(bool)
+    
+    hamming_accuracy = np.mean(y_true == y_pred)
+    subset_accuracy = accuracy_score(y_true, y_pred)
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        y_true, 
+        y_pred, 
+        average='macro',
+        zero_division=0
+    )
+    
+    return {
+        'hamming_accuracy': hamming_accuracy,
+        'subset_accuracy': subset_accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1
     }
 
-    return metrics
+def calculate_statistics(values: List[float]) -> Dict:
+    """
+Calculate statistical measures for a list of values.
+"""
+    values = np.array(values)
+    mean = np.mean(values)
+    std = np.std(values)
+    confidence_level = 0.95
+    degrees_of_freedom = len(values) - 1
+    t_value = stats.t.ppf((1 + confidence_level) / 2, degrees_of_freedom)
+    margin_of_error = t_value * (std / np.sqrt(len(values)))
+    
+    return {
+        'mean': mean,
+        'std': std,
+        'var': np.var(values),
+        'confidence_interval_95': (mean - margin_of_error, mean + margin_of_error)
+    }
 
+def evaluate_model(data: pd.DataFrame, model: str) -> Dict:
+    """
+Evaluate the model(OpenAI or Anthropic) against Longformer results.
+"""
+    manipulation_types = ['peer pressure', 'reciprocity pressure', 'gaslighting', 
+                         'guilt-tripping', 'emotional blackmail', 'fear enhancement', 
+                         'negging', 'general']
+    
+    folds = data['fold'].unique()
+    results_per_fold = {}
+    fold_metrics = {
+        'overall': {metric: [] for metric in ['hamming_accuracy', 'subset_accuracy', 'precision', 'recall', 'f1']},
+        'per_manipulation': {manip: {'precision': [], 'recall': [], 'f1': []} for manip in manipulation_types}
+    }
+    
+    for fold in folds:
+        fold_data = data[data['fold'] == fold]
+        
+        # Prepare true and predicted values
+        y_true = np.column_stack([fold_data[f'{manip}_binary_true'] for manip in manipulation_types])
+        y_pred = np.column_stack([fold_data[f'{model}_{manip.lower()}_zs'] for manip in manipulation_types])
+        
+        
 
-def main():
-    """Main function to perform zero-shot analysis."""
-    actual_labels = get_actual_labels()
+        # Calculate metrics
+        overall_metrics = calculate_metrics(y_true, y_pred)
+        
+        
 
-    if actual_labels is None:
-        return
+        # Calculate per-manipulation metrics
+        manip_metrics = {}
+        y_true = y_true.astype(bool)
+        y_pred = y_pred.astype(bool)
+        for i, manip in enumerate(manipulation_types):
+            
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                y_true[:, i],
+                y_pred[:, i],
+                average='binary',
+                zero_division=0
+            )
+            manip_metrics[manip] = {'precision': precision, 'recall': recall, 'f1': f1}
+        
+        results_per_fold[f'fold_{fold}'] = {
+            'overall': overall_metrics,
+            'per_manipulation': manip_metrics
+        }
+        
+        # Store metrics for statistical analysis
+        for metric, value in overall_metrics.items():
+            fold_metrics['overall'][metric].append(value)
+        for manip, metrics in manip_metrics.items():
+            for metric, value in metrics.items():
+                fold_metrics['per_manipulation'][manip][metric].append(value)
+    
+    # Calculate statistical analysis
+    statistical_analysis = {
+        'overall': {metric: calculate_statistics(values) 
+                   for metric, values in fold_metrics['overall'].items()},
+        'per_manipulation': {manip: {metric: calculate_statistics(values) 
+                                   for metric, values in metrics.items()}
+                           for manip, metrics in fold_metrics['per_manipulation'].items()}
+    }
+    
+    return {
+        'per_fold': results_per_fold,
+        'statistical_analysis': statistical_analysis
+    }
 
-    analysis_dirs = [ZERO_SHOT_DIR, FEW_SHOT_DIR]
-
-    for data_dir in analysis_dirs:
-        if not os.path.exists(data_dir):
-            continue
-
-        for filename in os.listdir(data_dir):
-            if filename.endswith('.json'):
-                filepath = os.path.join(data_dir, filename)
-                # Use filename as model name
-                model_name = os.path.splitext(filename)[0]
-
-                predictions = load_predictions(filepath)
-
-                if not predictions:
-                    continue
-
-                metrics = evaluate_predictions(predictions, actual_labels)
-
-                if metrics:
-                    print(f"Model: {model_name}")
-                    for metric, value in metrics.items():
-                        print(f"{metric}: {value:.4f}")
-                    print()
-
-
-if __name__ == "__main__":
-    main()
+    """
