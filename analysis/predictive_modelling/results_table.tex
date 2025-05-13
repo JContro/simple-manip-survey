@@ -1,0 +1,29 @@
+\begin{table*}[htbp]
+\centering
+\begin{tabular}{lcccc}
+\hline
+Model & Accuracy (Hamming Score) & Precision & Recall & F1 \\
+\hline
+\multicolumn{5}{c}{Zero-shot} \\
+\hline
+gemini-2.0-flash & 0.746 ± 0.024 & 0.629 ± 0.039 & 0.570 ± 0.047 & 0.555 ± 0.044 \\
+llama-3.1-405b-instruct & 0.771 ± 0.020 & 0.711 ± 0.041 & 0.477 ± 0.028 & 0.546 ± 0.034 \\
+llama-3.3-70b-instruct & 0.774 ± 0.019 & 0.725 ± 0.033 & 0.466 ± 0.034 & 0.539 ± 0.033 \\
+DeepSeek-V3 & 0.772 ± 0.020 & 0.712 ± 0.033 & 0.485 ± 0.032 & 0.553 ± 0.033 \\
+\multicolumn{5}{c}{Few-shot} \\
+\hline
+Perplexity R1 & 0.758 ± 0.017 & 0.665 ± 0.042 & 0.573 ± 0.049 & 0.583 ± 0.043 \\
+claude-3-5-sonnet-20241022 & 0.772 ± 0.024 & 0.649 ± 0.040 & 0.546 ± 0.052 & 0.580 ± 0.049 \\
+llama-3.1-405b-instruct & 0.768 ± 0.016 & 0.694 ± 0.037 & 0.501 ± 0.041 & 0.553 ± 0.039 \\
+DeepSeek-V3 & 0.766 ± 0.019 & 0.694 ± 0.031 & 0.509 ± 0.040 & 0.560 ± 0.038 \\
+gemini-2.0-flash & 0.758 ± 0.019 & 0.663 ± 0.039 & 0.567 ± 0.042 & 0.574 ± 0.040 \\
+\multicolumn{5}{c}{Finetuned} \\
+\hline
+longformer-base-4096 & 0.691 ± 0.015 & 0.607 ± 0.037 & 0.556 ± 0.072 & 0.557 ± 0.033 \\
+deberta-v3-base & 0.706 ± 0.009 & 0.643 ± 0.015 & 0.534 ± 0.034 & 0.566 ± 0.022 \\
+BERT + BiLSTM & 0.697 ± 0.015 & 0.613 ± 0.020 & 0.645 ± 0.070 & 0.619 ± 0.039 \\
+\hline
+\end{tabular}
+\caption{Performance comparison of different models. Values shown as mean ± standard deviation.}
+\label{table:prediction-modelling}
+\end{table*}

@@ -1,7 +1,8 @@
-"""Zero-shot analysis script for manipulation detection.
+"""Model analysis script for manipulation detection.
 
-This script gets data from Firestore and calculates metrics for zero-shot manipulation detection.
-It processes survey responses and conversations, prepares ground truth data, and evaluates model predictions.
+This script gets data from Firestore and calculates metrics for zero-shot, Chain of Thought (CoT),
+and few-shot manipulation detection. It processes survey responses and conversations, prepares
+ground truth data, and evaluates model predictions across different model types.
 """
 
 import os
@@ -33,9 +34,10 @@ MANIPULATION_TYPES = [
 ]
 
 
-def parse_zs_output(classification):
+def parse_model_output(classification):
     """
-    Parse the zero-shot model output, handling different JSON formats.
+    Parse the model output, handling different JSON formats.
+    Works for zero-shot, CoT, and few-shot model outputs.
 
     Args:
         classification: The raw classification output from the model
@@ -152,18 +154,19 @@ def calculate_statistics(values: List[float]) -> Dict:
     }
 
 
-def evaluate_model(data: pd.DataFrame, model: str) -> Dict:
+def evaluate_model(data: pd.DataFrame, model: str, model_type: str) -> Dict:
     """
     Evaluate the model predictions against ground truth.
 
     Args:
         data: DataFrame containing ground truth and model predictions
         model: Model name identifier used in column names
+        model_type: Type of model (zs, cot, fs)
 
     Returns:
         dict: Dictionary containing evaluation results
     """
-    logger.info(f"Evaluating model: {model}")
+    logger.info(f"Evaluating model: {model} (type: {model_type})")
 
     folds = data['fold'].unique()
     results_per_fold = {}
@@ -180,7 +183,7 @@ def evaluate_model(data: pd.DataFrame, model: str) -> Dict:
         y_true = np.column_stack(
             [fold_data[f'{manip}_binary_true'] for manip in MANIPULATION_TYPES])
         y_pred = np.column_stack(
-            [fold_data[f'{model}_{manip.lower()}_zs'] for manip in MANIPULATION_TYPES])
+            [fold_data[f'{model}_{manip.lower()}_{model_type}'] for manip in MANIPULATION_TYPES])
 
         # Calculate metrics
         overall_metrics = calculate_metrics(y_true, y_pred)
@@ -355,21 +358,44 @@ def prepare_data(survey_responses, conversations, fold_mapping):
     return merged_df
 
 
-def load_model_predictions(data_dir, model_name):
+def load_model_predictions(data_dir, model_name, model_type):
     """
     Load model predictions from JSON files.
 
     Args:
         data_dir: Directory containing model prediction files
         model_name: Name of the model to load predictions for
+        model_type: Type of model (zero_shot, cot, few_shot)
 
     Returns:
         dict: Dictionary mapping conversation IDs to model predictions
     """
-    logger.info(f"Loading predictions for model: {model_name}")
+    logger.info(
+        f"Loading predictions for model: {model_name} (type: {model_type})")
+
+    # Map model_type to directory name
+    type_to_dir = {
+        "zs": "zero_shot",
+        "cot": "CoT",
+        "fs": "few_shot"
+    }
+
+    dir_name = type_to_dir.get(model_type)
+    if not dir_name:
+        logger.error(f"Invalid model type: {model_type}")
+        return {}
 
     # Construct path to the model's prediction file
-    file_path = os.path.join(data_dir, "zero_shot", f"{model_name}.json")
+    file_path = os.path.join(data_dir, dir_name, f"{model_name}.json")
+
+    # For few_shot models, they might have "-few-shot" suffix
+    if model_type == "fs" and not os.path.exists(file_path):
+        file_path = os.path.join(
+            data_dir, dir_name, f"{model_name}-few-shot.json")
+
+    # For CoT models, they might have "-cot" suffix
+    if model_type == "cot" and not os.path.exists(file_path):
+        file_path = os.path.join(data_dir, dir_name, f"{model_name}-cot.json")
 
     if not os.path.exists(file_path):
         logger.error(f"Prediction file not found: {file_path}")
@@ -385,15 +411,22 @@ def load_model_predictions(data_dir, model_name):
         classification = pred.get('classification')
 
         if conv_id and classification:
-            parsed_data = parse_zs_output(classification)
+            parsed_data = parse_model_output(classification)
             if parsed_data:
                 pred_dict[conv_id] = parsed_data
 
-    logger.info(f"Loaded {len(pred_dict)} predictions for {model_name}")
+    logger.info(
+        f"Loaded {len(pred_dict)} predictions for {model_name} ({model_type})")
+
+    # Ensure we have at least 400 predictions for robust analysis
+    if len(pred_dict) < 400:
+        logger.warning(f"WARNING: Only {len(pred_dict)} predictions found for {model_name} ({model_type}). "
+                       f"Minimum recommended is 400 for reliable analysis.")
+
     return pred_dict
 
 
-def process_model_predictions(data_df, model_name, predictions):
+def process_model_predictions(data_df, model_name, predictions, model_type):
     """
     Process model predictions and add them to the DataFrame.
 
@@ -401,18 +434,20 @@ def process_model_predictions(data_df, model_name, predictions):
         data_df: DataFrame containing ground truth data
         model_name: Name of the model
         predictions: Dictionary mapping conversation IDs to model predictions
+        model_type: Type of model (zs, cot, fs)
 
     Returns:
         pd.DataFrame: DataFrame with added model prediction columns
     """
-    logger.info(f"Processing predictions for model: {model_name}")
+    logger.info(
+        f"Processing predictions for model: {model_name} (type: {model_type})")
 
     # Create a copy of the DataFrame to avoid modifying the original
     df = data_df.copy()
 
     # Initialize prediction columns
     for manip in MANIPULATION_TYPES:
-        df[f'{model_name}_{manip.lower()}_zs'] = 0
+        df[f'{model_name}_{manip.lower()}_{model_type}'] = 0
 
     # Fill in predictions
     for idx, row in df.iterrows():
@@ -427,68 +462,68 @@ def process_model_predictions(data_df, model_name, predictions):
                 # Handle peer pressure
                 if 'Peer Pressure' in tactics:
                     value = tactics['Peer Pressure']
-                    df.at[idx, f'{model_name}_peer pressure_zs'] = int(
+                    df.at[idx, f'{model_name}_peer pressure_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
                 elif 'Peer-Pressure' in tactics:
                     value = tactics['Peer-Pressure']
-                    df.at[idx, f'{model_name}_peer pressure_zs'] = int(
+                    df.at[idx, f'{model_name}_peer pressure_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
 
                 # Handle reciprocity pressure
                 if 'Reciprocity Pressure' in tactics:
                     value = tactics['Reciprocity Pressure']
-                    df.at[idx, f'{model_name}_reciprocity pressure_zs'] = int(
+                    df.at[idx, f'{model_name}_reciprocity pressure_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
                 elif 'Reciprocity-Pressure' in tactics:
                     value = tactics['Reciprocity-Pressure']
-                    df.at[idx, f'{model_name}_reciprocity pressure_zs'] = int(
+                    df.at[idx, f'{model_name}_reciprocity pressure_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
 
                 # Handle gaslighting
                 if 'Gaslighting' in tactics:
                     value = tactics['Gaslighting']
-                    df.at[idx, f'{model_name}_gaslighting_zs'] = int(value) if isinstance(
+                    df.at[idx, f'{model_name}_gaslighting_{model_type}'] = int(value) if isinstance(
                         value, (bool, int, str)) else int(bool(value))
 
                 # Handle guilt-tripping
                 if 'Guilt-Tripping' in tactics:
                     value = tactics['Guilt-Tripping']
-                    df.at[idx, f'{model_name}_guilt-tripping_zs'] = int(
+                    df.at[idx, f'{model_name}_guilt-tripping_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
 
                 # Handle emotional blackmail
                 if 'Emotional Blackmail' in tactics:
                     value = tactics['Emotional Blackmail']
-                    df.at[idx, f'{model_name}_emotional blackmail_zs'] = int(
+                    df.at[idx, f'{model_name}_emotional blackmail_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
                 elif 'Emotional-Blackmail' in tactics:
                     value = tactics['Emotional-Blackmail']
-                    df.at[idx, f'{model_name}_emotional blackmail_zs'] = int(
+                    df.at[idx, f'{model_name}_emotional blackmail_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
 
                 # Handle fear enhancement
                 if 'Fear Enhancement' in tactics:
                     value = tactics['Fear Enhancement']
-                    df.at[idx, f'{model_name}_fear enhancement_zs'] = int(
+                    df.at[idx, f'{model_name}_fear enhancement_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
                 elif 'Fear-Enhancement' in tactics:
                     value = tactics['Fear-Enhancement']
-                    df.at[idx, f'{model_name}_fear enhancement_zs'] = int(
+                    df.at[idx, f'{model_name}_fear enhancement_{model_type}'] = int(
                         value) if isinstance(value, (bool, int, str)) else int(bool(value))
 
                 # Handle negging
                 if 'Negging' in tactics:
                     value = tactics['Negging']
-                    df.at[idx, f'{model_name}_negging_zs'] = int(value) if isinstance(
+                    df.at[idx, f'{model_name}_negging_{model_type}'] = int(value) if isinstance(
                         value, (bool, int, str)) else int(bool(value))
 
             # Extract general manipulation prediction
             if 'general' in pred:
                 value = pred['general']
-                df.at[idx, f'{model_name}_general_zs'] = int(value) if isinstance(
+                df.at[idx, f'{model_name}_general_{model_type}'] = int(value) if isinstance(
                     value, (bool, int, str)) else int(bool(value))
 
-    logger.info(f"Processed predictions for {model_name}")
+    logger.info(f"Processed predictions for {model_name} ({model_type})")
     return df
 
 
@@ -512,9 +547,9 @@ def save_results(results, output_dir, model_name):
 
 def main():
     """
-    Main function to run the zero-shot analysis.
+    Main function to run the model analysis for different model types.
     """
-    logger.info("Starting zero-shot analysis")
+    logger.info("Starting model analysis")
 
     # Set paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -532,29 +567,46 @@ def main():
     # Prepare data
     data_df = prepare_data(survey_responses, conversations, fold_mapping)
 
-    # Get list of model files
-    model_files = glob.glob(os.path.join(data_dir, "zero_shot", "*.json"))
-    model_names = [os.path.splitext(os.path.basename(f))[0]
-                   for f in model_files]
+    # Define model types and their corresponding directories
+    model_types = {
+        "zs": "zero_shot",
+        "cot": "CoT",
+        "fs": "few_shot"
+    }
 
-    # Process each model
-    for model_name in model_names:
-        logger.info(f"Processing model: {model_name}")
+    # Process each model type
+    for model_type, dir_name in model_types.items():
+        logger.info(f"Processing model type: {model_type}")
 
-        # Load model predictions
-        predictions = load_model_predictions(data_dir, model_name)
+        # Get list of model files for the current type
+        model_files = glob.glob(os.path.join(data_dir, dir_name, "*.json"))
+        model_names = [os.path.splitext(os.path.basename(f).replace(f"-{model_type}", ""))[0]
+                       for f in model_files]
 
-        # Process predictions
-        processed_df = process_model_predictions(
-            data_df, model_name, predictions)
+        # Process each model within the current type
+        for model_name in model_names:
+            logger.info(f"Processing model: {model_name} (type: {model_type})")
 
-        # Evaluate model
-        results = evaluate_model(processed_df, model_name)
+            # Load model predictions
+            predictions = load_model_predictions(
+                data_dir, model_name, model_type)
 
-        # Save results
-        save_results(results, output_dir, model_name)
+            # Process predictions
+            processed_df = process_model_predictions(
+                data_df, model_name, predictions, model_type)
 
-    logger.info("Zero-shot analysis completed")
+            # Evaluate model
+            results = evaluate_model(processed_df, model_name, model_type)
+            # Ensure we have enough predictions before saving results
+            if len(predictions) < 400:
+                logger.info(
+                    f"Skipping {model_name} ({model_type}): Found {len(predictions)} predictions, minimum required is 400.")
+                continue
+
+            # Save results
+            save_results(results, output_dir, f"{model_name}_{model_type}")
+
+    logger.info("Model analysis completed")
 
 
 if __name__ == "__main__":
