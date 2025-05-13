@@ -1,9 +1,9 @@
-import json
-import os
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import firebase_admin
-from firebase_admin import credentials
 from firebase_admin import firestore
+from firebase_admin import credentials
+import firebase_admin
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+import os
+import json
 
 # Initialize Firebase Admin SDK if not already initialized
 if not firebase_admin._apps:
@@ -15,6 +15,7 @@ if not firebase_admin._apps:
     })
 
 db = firestore.client()
+print(f"Firestore client initialized: {db is not None}")
 
 # Define the directories containing the prediction files
 ZERO_SHOT_DIR = 'data/zero_shot'
@@ -31,14 +32,26 @@ def load_predictions(filepath):
 def get_actual_labels():
     """Fetches actual labels from Firestore."""
     try:
-        conversations_ref = db.collection("conversations")
+        conversations_ref = db.collection("survey_responses")
         docs = conversations_ref.stream()
-        # Assuming conversation documents have a 'uuid' and 'labels' field
-        actual_labels = {doc.to_dict()['uuid']: doc.to_dict().get(
-            'labels', []) for doc in docs}
+
+        actual_labels = {}
+        for doc in docs:
+            data = doc.to_dict()
+            conversation_uuid = data.get("conversation_uuid")
+            if conversation_uuid:
+                # Extract labels where the value is not null and key starts with 'manipulative_'
+                # Extract labels and their values where the value is not null and key starts with 'manipulative_'
+                labels_with_values = {
+                    key: value for key, value in data.items()
+                    if key.startswith("manipulative_") and value is not None
+                }
+                actual_labels[conversation_uuid] = labels_with_values
+
         return actual_labels
+
     except Exception as e:
-        print(f"Error fetching conversations from Firestore: {e}")
+        print(f"Error fetching actual labels from Firestore: {e}")
         return None
 
 
@@ -51,7 +64,7 @@ def evaluate_predictions(predictions, actual_labels):
     # And actual_labels is a dict mapping uuid to actual labels list
 
     for pred_item in predictions:
-        uuid = pred_item.get('uuid')
+        uuid = pred_item.get('conversation_id')
         # Assuming 'predicted_labels' key
         predicted_labels = pred_item.get('predicted_labels', [])
 
@@ -120,7 +133,7 @@ def main():
         return
 
     print(f"Fetched {len(actual_labels)} actual labels.")
-
+    print(f"Type of actual_labels keys: {type(next(iter(actual_labels)))}")
     analysis_dirs = [ZERO_SHOT_DIR, FEW_SHOT_DIR]
 
     for data_dir in analysis_dirs:
@@ -148,6 +161,7 @@ def main():
                 if metrics:
                     for metric, value in metrics.items():
                         print(f"{metric}: {value:.4f}")
+            break
 
 
 if __name__ == "__main__":
