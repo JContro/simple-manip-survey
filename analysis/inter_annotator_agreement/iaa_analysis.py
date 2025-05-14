@@ -1,3 +1,10 @@
+"""
+IAA Analysis - Krippendorff's Alpha Calculator for Binary Conversations
+
+This script calculates Krippendorff's alpha for binary annotations in conversations.
+It loads conversation data from Firestore and performs inter-annotator agreement analysis.
+"""
+
 from nltk.metrics import agreement
 import nltk
 import firebase_admin
@@ -23,6 +30,7 @@ def get_conversations_from_firestore():
     conversations = []
     for doc in docs:
         conversations.append(doc.to_dict())
+    print(f"Loaded {len(conversations)} survey responses from Firestore")
     return conversations
 
 
@@ -36,357 +44,99 @@ def get_conversations_collection():
         # Use conversation UUID as key for easy lookup
         if 'uuid' in data:
             conversations[data['uuid']] = data
+    print(f"Loaded {len(conversations)} conversations from Firestore")
     return conversations
 
 
-def perform_iaa_analysis(conversations):
+def extract_binary_annotations(survey_responses, field_name):
     """
-    Performs Inter-Annotator Agreement (IAA) analysis on the provided conversations
-    using Krippendorff's Alpha.
-
-    Only includes conversations with at least 2 annotators in the analysis.
-    """
-    print("Performing IAA analysis using Krippendorff's Alpha...")
-
-    # Extract annotation data
-    manipulative_types = [
-        "manipulative_emotional_blackmail",
-        "manipulative_fear_enhancement",
-        "manipulative_gaslighting",
-        "manipulative_general",
-        "manipulative_guilt_tripping",
-        "manipulative_negging",
-        "manipulative_peer_pressure",
-        "manipulative_reciprocity",
-    ]
-
-    # Group annotations by conversation_id and manipulative type
-    annotations_by_conv_type = defaultdict(lambda: defaultdict(list))
-
-    # First, collect all annotations grouped by conversation and manipulation type
-    for record in conversations:
-        annotator = record.get('username', 'unknown_annotator')
-        conversation_id = record.get(
-            'conversation_uuid', 'unknown_conversation')
-
-        for manip_type in manipulative_types:
-            rating = record.get(manip_type)
-            if rating is not None:  # Only include if annotated
-                annotations_by_conv_type[conversation_id][manip_type].append(
-                    (annotator, f"{conversation_id}_{manip_type}", str(rating)))
-
-    # Filter to include only conversations with at least 2 annotators for each type
-    filtered_annotations = []
-    valid_conversations = 0
-    skipped_conversations = 0
-
-    for conversation_id, manip_types in annotations_by_conv_type.items():
-        conversation_included = False
-
-        for manip_type, annotations in manip_types.items():
-            # Count unique annotators for this conversation and manipulation type
-            unique_annotators = set(
-                annotator for annotator, _, _ in annotations)
-
-            if len(unique_annotators) >= 2:
-                # Include this conversation's annotations for this manipulation type
-                filtered_annotations.extend(annotations)
-                conversation_included = True
-            else:
-                # Skip this manipulation type for this conversation
-                pass
-
-        if conversation_included:
-            valid_conversations += 1
-        else:
-            skipped_conversations += 1
-
-    print(
-        f"Found {valid_conversations} conversations with at least 2 annotators")
-    print(
-        f"Skipped {skipped_conversations} conversations with fewer than 2 annotators")
-
-    if not filtered_annotations:
-        print("No annotation data with multiple annotators found to perform analysis.")
-        return
-
-    # Calculate Krippendorff's Alpha for each manipulative type (Original Scores)
-    print("\nKrippendorff's Alpha per manipulative type (Original Scores):")
-    for manip_type in manipulative_types:
-        # Filter annotations for the current manipulative type
-        manip_annotations = [(a, item, category)
-                             for a, item, category in filtered_annotations if manip_type in item]
-
-        if not manip_annotations:
-            print(f"  {manip_type}: No data")
-            continue
-
-        # Create an AnnotationTask
-        task = agreement.AnnotationTask(data=manip_annotations)
-
-        # Calculate and print Alpha
-        try:
-            alpha = task.alpha()
-            print(f"  {manip_type}: {alpha:.4f}")
-        except ValueError as e:
-            print(f"  {manip_type}: Could not calculate Alpha - {e}")
-
-    # Calculate overall Krippendorff's Alpha (Original Scores)
-    print("\nOverall Krippendorff's Alpha (Original Scores):")
-    if filtered_annotations:
-        overall_task = agreement.AnnotationTask(data=filtered_annotations)
-        try:
-            overall_alpha = overall_task.alpha()
-            print(f"  Overall: {overall_alpha:.4f}")
-        except ValueError as e:
-            print(f"  Overall: Could not calculate Alpha - {e}")
-    else:
-        print("  Overall: No data")
-
-    # --- Binary Analysis ---
-    print("\n--- Binary Analysis (Scores < 4 are 0, else 1) ---")
-
-    binary_annotations = []
-    for annotator, item, category in filtered_annotations:
-        try:
-            score = int(category)
-            binary_score = '1' if score > 4 else '0'
-            binary_annotations.append((annotator, item, binary_score))
-        except ValueError:
-            # Handle cases where category is not a valid integer
-            print(
-                f"Warning: Could not convert category '{category}' to integer for binary analysis.")
-            pass  # Skip this annotation for binary analysis
-
-    if not binary_annotations:
-        print("No valid annotation data found for binary analysis.")
-        return
-
-    # Calculate Krippendorff's Alpha for each manipulative type (Binary Scores)
-    print("\nKrippendorff's Alpha per manipulative type (Binary Scores):")
-    for manip_type in manipulative_types:
-        # Filter binary annotations for the current manipulative type
-        binary_manip_annotations = [(a, item, category)
-                                    for a, item, category in binary_annotations if manip_type in item]
-
-        if not binary_manip_annotations:
-            print(f"  {manip_type}: No data")
-            continue
-
-        # Create an AnnotationTask for binary scores
-        binary_task = agreement.AnnotationTask(data=binary_manip_annotations)
-
-        # Calculate and print Alpha for binary scores
-        try:
-            binary_alpha = binary_task.alpha()
-            print(f"  {manip_type}: {binary_alpha:.4f}")
-        except ValueError as e:
-            print(f"  {manip_type}: Could not calculate Binary Alpha - {e}")
-
-    # Calculate overall Krippendorff's Alpha (Binary Scores)
-    print("\nOverall Krippendorff's Alpha (Binary Scores):")
-    if binary_annotations:
-        overall_binary_task = agreement.AnnotationTask(data=binary_annotations)
-        try:
-            overall_binary_alpha = overall_binary_task.alpha()
-            print(f"  Overall: {overall_binary_alpha:.4f}")
-        except ValueError as e:
-            print(f"  Overall: Could not calculate Overall Binary Alpha - {e}")
-    else:
-        print("  Overall: No data for binary analysis")
-
-
-def calculate_masi_distance(set1, set2):
-    """
-    Calculate MASI distance between two sets.
-    MASI = Jaccard * M, where M is a monotonicity factor.
+    Extract binary annotations from survey responses based on a specific field.
 
     Args:
-        set1: First set of annotations
-        set2: Second set of annotations
+        survey_responses: List of survey response dictionaries
+        field_name: Field name to extract binary values from
 
     Returns:
-        MASI similarity score (1 - MASI distance)
+        Dictionary mapping conversation IDs to lists of binary annotations
     """
-    # Handle empty sets
-    if not set1 and not set2:
-        return 1.0  # Perfect agreement on empty sets
-    if not set1 or not set2:
-        return 0.0  # No agreement when one set is empty
+    binary_annotations = []
 
-    # Calculate Jaccard similarity
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    jaccard = intersection / union if union > 0 else 0
-
-    # Calculate monotonicity factor M
-    if set1 == set2:  # Perfect match
-        m = 1.0
-    elif set1.issubset(set2) or set2.issubset(set1):  # One is subset of the other
-        m = 0.67
-    elif intersection > 0:  # Non-empty intersection
-        m = 0.33
-    else:  # Disjoint sets
-        m = 0.0
-
-    # MASI similarity = Jaccard * M
-    return jaccard * m
-
-
-def perform_masi_analysis(conversations):
-    """
-    Performs Inter-Annotator Agreement (IAA) analysis using MASI (Measuring Agreement on Set-valued Items).
-
-    Args:
-        conversations: List of conversation annotations
-    """
-    print("\n\n=== Performing IAA analysis using MASI ===")
-
-    manipulative_types = [
-        "manipulative_emotional_blackmail",
-        "manipulative_fear_enhancement",
-        "manipulative_gaslighting",
-        "manipulative_general",
-        "manipulative_guilt_tripping",
-        "manipulative_negging",
-        "manipulative_peer_pressure",
-        "manipulative_reciprocity",
-    ]
-
-    # Group annotations by conversation_uuid and annotator
-    conversation_annotations = defaultdict(lambda: defaultdict(dict))
-
-    for record in conversations:
-        annotator = record.get('username', 'unknown_annotator')
-        conversation_id = record.get(
-            'conversation_uuid', 'unknown_conversation')
-
-        for manip_type in manipulative_types:
-            rating = record.get(manip_type)
-            if rating is not None:
-                # Convert to binary for set representation (1 if score > 4, else 0)
-                try:
-                    score = int(rating)
-                    binary_score = 1 if score > 4 else 0
-                    conversation_annotations[conversation_id][annotator][manip_type] = binary_score
-                except ValueError:
-                    print(
-                        f"Warning: Could not convert rating '{rating}' to integer for MASI analysis.")
-
-    # Calculate MASI for each manipulative type
-    print("\nMASI scores per manipulative type:")
-
-    for manip_type in manipulative_types:
-        masi_scores = []
-
-        # For each conversation, compare all pairs of annotators
-        for conversation_id, annotators in conversation_annotations.items():
-            annotator_list = list(annotators.keys())
-
-            # Skip if less than 2 annotators for this conversation
-            if len(annotator_list) < 2:
-                continue
-
-            # Compare all pairs of annotators
-            for i in range(len(annotator_list)):
-                for j in range(i+1, len(annotator_list)):
-                    annotator1 = annotator_list[i]
-                    annotator2 = annotator_list[j]
-
-                    # Create sets of manipulative types marked as 1 by each annotator
-                    set1 = {mt for mt in manipulative_types if
-                            mt in annotators[annotator1] and
-                            annotators[annotator1][mt] == 1 and
-                            mt == manip_type}
-
-                    set2 = {mt for mt in manipulative_types if
-                            mt in annotators[annotator2] and
-                            annotators[annotator2][mt] == 1 and
-                            mt == manip_type}
-
-                    # Calculate MASI for this pair and manipulative type
-                    masi = calculate_masi_distance(set1, set2)
-                    masi_scores.append(masi)
-
-        # Calculate average MASI for this manipulative type
-        if masi_scores:
-            avg_masi = np.mean(masi_scores)
-            print(f"  {manip_type}: {avg_masi:.4f}")
-        else:
-            print(f"  {manip_type}: No data for MASI calculation")
-
-    # Calculate overall MASI across all manipulative types
-    print("\nOverall MASI score:")
-    overall_masi_scores = []
-
-    # For each conversation, compare all pairs of annotators
-    for conversation_id, annotators in conversation_annotations.items():
-        annotator_list = list(annotators.keys())
-
-        # Skip if less than 2 annotators for this conversation
-        if len(annotator_list) < 2:
-            continue
-
-        # Compare all pairs of annotators
-        for i in range(len(annotator_list)):
-            for j in range(i+1, len(annotator_list)):
-                annotator1 = annotator_list[i]
-                annotator2 = annotator_list[j]
-
-                # Create sets of manipulative types marked as 1 by each annotator
-                set1 = {mt for mt in manipulative_types if
-                        mt in annotators[annotator1] and
-                        annotators[annotator1][mt] == 1}
-
-                set2 = {mt for mt in manipulative_types if
-                        mt in annotators[annotator2] and
-                        annotators[annotator2][mt] == 1}
-
-                # Calculate MASI for this pair across all manipulative types
-                masi = calculate_masi_distance(set1, set2)
-                overall_masi_scores.append(masi)
-                import pdb
-                pdb.set_trace()
-
-    # Calculate average overall MASI
-    if overall_masi_scores:
-        avg_overall_masi = np.mean(overall_masi_scores)
-        print(f"  Overall: {avg_overall_masi:.4f}")
-    else:
-        print("  Overall: No data for MASI calculation")
-
-
-def perform_prompted_iaa_analysis(survey_responses, conversations):
-    """
-    Performs IAA analysis based on the prompted manipulation category.
-
-    Args:
-        survey_responses: List of survey response annotations
-        conversations: Dictionary of conversations with uuid as key
-    """
-    print("\n\n=== Performing IAA analysis based on prompted manipulation category ===")
-
-    # Join survey responses with conversations
-    joined_data = []
     for response in survey_responses:
-        conversation_uuid = response.get('conversation_uuid')
-        if conversation_uuid and conversation_uuid in conversations:
-            # Add the prompted_as field to the response
-            response_with_prompt = response.copy()
-            response_with_prompt['prompted_as'] = conversations[conversation_uuid].get(
-                'prompted_as', 'unknown')
-            joined_data.append(response_with_prompt)
+        for key in response.keys():
+            if 'manipulative' in key:
+                if response[key] is None:
+                    continue
+                value = int(response[key])
+                binary_value = 1 if value >= 4 else 0
+                binary_annotations.append({response['username'],
+                                           f"{response['conversation_uuid']}-{key}",
+                                           binary_value})
 
-    print(f"Joined {len(joined_data)} survey responses with conversations")
+    return binary_annotations
 
-    # Group responses by prompted_as
-    prompted_groups = defaultdict(list)
-    for response in joined_data:
-        prompted_as = response.get('prompted_as', 'unknown')
-        prompted_groups[prompted_as].append(response)
 
-    # List of manipulation types
-    manipulative_types = [
+def overall_alpha(binary_annotations):
+    """
+    Analyze binary annotations and calculate Krippendorff's alpha.
+
+    Args:
+        binary_annotations: Dictionary mapping conversation IDs to lists of binary annotations
+
+    Returns:
+        Dictionary with analysis results
+    """
+    # TODO: Get the overall krippendorff alpha
+
+
+def print_results(results, field_name):
+    """
+    Print analysis results.
+
+    Args:
+        results: Dictionary with analysis results
+        field_name: Field name that was analyzed
+    """
+    print(f"\n=== Krippendorff's Alpha Analysis for {field_name} ===")
+    print(f"Total conversations: {results['total_conversations']}")
+    print(
+        f"Conversations with multiple annotations: {results['conversations_with_multiple_annotations']}")
+
+    if results['alpha_values']:
+        print("\nAlpha values per conversation:")
+        for conv_id, alpha in results['alpha_values']:
+            print(f"  {conv_id}: {alpha:.4f}")
+
+        # Calculate average alpha
+        avg_alpha = np.mean([alpha for _, alpha in results['alpha_values']])
+        print(f"\nAverage alpha: {avg_alpha:.4f}")
+
+    if results['overall_alpha'] is not None:
+        print(
+            f"\nOverall Krippendorff's alpha: {results['overall_alpha']:.4f}")
+
+        # Interpret the result
+        alpha = results['overall_alpha']
+        if alpha == 1.0:
+            print("Perfect agreement (alpha = 1.0)")
+        elif alpha >= 0.8:
+            print("Good agreement (alpha >= 0.8)")
+        elif alpha >= 0.67:
+            print("Tentative agreement (0.67 <= alpha < 0.8)")
+        elif alpha >= 0:
+            print("Poor agreement (0 <= alpha < 0.67)")
+        else:
+            print("Agreement worse than chance (alpha < 0)")
+
+
+def analyze_all_binary_fields(survey_responses):
+    """
+    Analyze all relevant binary fields in the survey responses.
+
+    Args:
+        survey_responses: List of survey response dictionaries
+    """
+    # Fields to analyze
+    binary_fields = [
         "manipulative_emotional_blackmail",
         "manipulative_fear_enhancement",
         "manipulative_gaslighting",
@@ -394,270 +144,33 @@ def perform_prompted_iaa_analysis(survey_responses, conversations):
         "manipulative_guilt_tripping",
         "manipulative_negging",
         "manipulative_peer_pressure",
-        "manipulative_reciprocity",
+        "manipulative_reciprocity"
     ]
 
-    # For each prompted_as group, calculate IAA for the prompted category and general
-    print("\n--- IAA for prompted manipulation categories ---")
-    for prompted_as, responses in prompted_groups.items():
-        print(f"\nPrompted as: {prompted_as}")
-
-        # Determine which manipulation category to analyze based on prompted_as
-        target_category = None
-        if prompted_as in ["emotional_blackmail", "manipulative_emotional_blackmail", "Emotional Blackmail"]:
-            target_category = "manipulative_emotional_blackmail"
-        elif prompted_as in ["fear_enhancement", "manipulative_fear_enhancement", "Fear Enhancement"]:
-            target_category = "manipulative_fear_enhancement"
-        elif prompted_as in ["gaslighting", "manipulative_gaslighting", "Gaslighting"]:
-            target_category = "manipulative_gaslighting"
-        elif prompted_as in ["guilt_tripping", "manipulative_guilt_tripping", "Guilt-Tripping"]:
-            target_category = "manipulative_guilt_tripping"
-        elif prompted_as in ["negging", "manipulative_negging", "Negging"]:
-            target_category = "manipulative_negging"
-        elif prompted_as in ["peer_pressure", "manipulative_peer_pressure", "Peer Pressure"]:
-            target_category = "manipulative_peer_pressure"
-        elif prompted_as in ["reciprocity", "manipulative_reciprocity", "Reciprocity Pressure"]:
-            target_category = "manipulative_reciprocity"
-
-        print(
-            f"  Mapped prompted_as '{prompted_as}' to target category: {target_category}")
-
-        # Always include general category
-        categories_to_analyze = ["manipulative_general"]
-        if target_category:
-            categories_to_analyze.append(target_category)
-
-        # Extract annotations for the target categories
-        for category in categories_to_analyze:
-            # First collect all annotations
-            all_annotations_by_conversation = defaultdict(list)
-            for response in responses:
-                annotator = response.get('username', 'unknown_annotator')
-                conversation_id = response.get(
-                    'conversation_uuid', 'unknown_conversation')
-                rating = response.get(category)
-                if rating is not None:
-                    all_annotations_by_conversation[conversation_id].append(
-                        (annotator, f"{conversation_id}_{category}", str(rating)))
-
-            # Filter to include only conversations with at least 2 annotators
-            annotations = []
-            valid_conversations = 0
-            for conversation_id, conv_annotations in all_annotations_by_conversation.items():
-                # Count unique annotators for this conversation
-                unique_annotators = set(
-                    annotator for annotator, _, _ in conv_annotations)
-                if len(unique_annotators) >= 2:
-                    annotations.extend(conv_annotations)
-                    valid_conversations += 1
-
-            print(
-                f"  {category}: Found {valid_conversations} conversations with at least 2 annotators")
-
-            if not annotations:
-                print(f"  {category}: No data with multiple annotators")
-                continue
-
-            # Calculate Krippendorff's Alpha for original scores
-            task = agreement.AnnotationTask(data=annotations)
-            try:
-                alpha = task.alpha()
-                print(f"  {category} (Original Scores): {alpha:.4f}")
-            except ValueError as e:
-                print(
-                    f"  {category} (Original Scores): Could not calculate Alpha - {e}")
-
-            # Calculate Krippendorff's Alpha for binary scores
-            binary_annotations = []
-            for annotator, item, category_val in annotations:
-                try:
-                    score = int(category_val)
-                    binary_score = '1' if score > 4 else '0'
-                    binary_annotations.append((annotator, item, binary_score))
-                except ValueError:
-                    pass
-
-            if binary_annotations:
-                # Debug information about binary annotations
-                ones_count = sum(
-                    1 for _, _, score in binary_annotations if score == '1')
-                zeros_count = sum(
-                    1 for _, _, score in binary_annotations if score == '0')
-                print(
-                    f"  {category} Binary annotations: {len(binary_annotations)} total, {ones_count} ones, {zeros_count} zeros")
-
-                # Count unique annotators and items
-                unique_annotators = set(
-                    annotator for annotator, _, _ in binary_annotations)
-                unique_items = set(item for _, item, _ in binary_annotations)
-                print(
-                    f"  {category} Unique annotators: {len(unique_annotators)}, Unique items: {len(unique_items)}")
-
-                binary_task = agreement.AnnotationTask(data=binary_annotations)
-                try:
-                    binary_alpha = binary_task.alpha()
-                    print(f"  {category} (Binary Scores): {binary_alpha:.4f}")
-                except ValueError as e:
-                    print(
-                        f"  {category} (Binary Scores): Could not calculate Alpha - {e}")
-
-    # Calculate overall IAA across all prompted categories
-    print("\n--- Overall IAA across all prompted categories ---")
-
-    # First collect all annotations by conversation and category
-    annotations_by_conv_category = defaultdict(lambda: defaultdict(list))
-
-    # Debug counters
-    processed_responses = 0
-    matched_categories = 0
-
-    for prompted_as, responses in prompted_groups.items():
-        print(
-            f"Processing {len(responses)} responses for prompted_as: {prompted_as}")
-
-        target_category = None
-        if prompted_as in ["emotional_blackmail", "manipulative_emotional_blackmail", "Emotional Blackmail"]:
-            target_category = "manipulative_emotional_blackmail"
-        elif prompted_as in ["fear_enhancement", "manipulative_fear_enhancement", "Fear Enhancement"]:
-            target_category = "manipulative_fear_enhancement"
-        elif prompted_as in ["gaslighting", "manipulative_gaslighting", "Gaslighting"]:
-            target_category = "manipulative_gaslighting"
-        elif prompted_as in ["guilt_tripping", "manipulative_guilt_tripping", "Guilt-Tripping"]:
-            target_category = "manipulative_guilt_tripping"
-        elif prompted_as in ["negging", "manipulative_negging", "Negging"]:
-            target_category = "manipulative_negging"
-        elif prompted_as in ["peer_pressure", "manipulative_peer_pressure", "Peer Pressure"]:
-            target_category = "manipulative_peer_pressure"
-        elif prompted_as in ["reciprocity", "manipulative_reciprocity", "Reciprocity Pressure"]:
-            target_category = "manipulative_reciprocity"
-
-        print(f"  Mapped to target category: {target_category}")
-
-        for response in responses:
-            processed_responses += 1
-            annotator = response.get('username', 'unknown_annotator')
-            conversation_id = response.get(
-                'conversation_uuid', 'unknown_conversation')
-
-            if target_category:
-                # Add annotations for the prompted category
-                rating = response.get(target_category)
-                if rating is not None:
-                    matched_categories += 1
-                    annotations_by_conv_category[conversation_id][target_category].append(
-                        (annotator, f"{conversation_id}_{target_category}", str(rating)))
-
-            # Add annotations for the general category
-            general_rating = response.get("manipulative_general")
-            if general_rating is not None:
-                annotations_by_conv_category[conversation_id]["manipulative_general"].append(
-                    (annotator, f"{conversation_id}_manipulative_general", str(general_rating)))
-
-    print(f"\nProcessed {processed_responses} total responses")
-    print(f"Found {matched_categories} matching target categories")
-
-    # Now filter to include only conversations with at least 2 annotators per category
-    all_annotations = []
-    all_binary_annotations = []
-    valid_conversations = 0
-
-    for conversation_id, categories in annotations_by_conv_category.items():
-        for category, annotations in categories.items():
-            # Count unique annotators for this conversation and category
-            unique_annotators = set(
-                annotator for annotator, _, _ in annotations)
-
-            if len(unique_annotators) >= 2:
-                valid_conversations += 1
-                # Add to all_annotations
-                all_annotations.extend(annotations)
-
-                # Create binary annotations
-                for annotator, item, category_val in annotations:
-                    try:
-                        score = int(category_val)
-                        binary_score = '1' if score > 4 else '0'
-                        all_binary_annotations.append(
-                            (annotator, item, binary_score))
-                    except ValueError:
-                        pass
-
-    print(
-        f"Found {valid_conversations} valid conversation-category pairs with at least 2 annotators")
-
-    # Debug information about all annotations
-    print(
-        f"\nTotal annotations collected for overall IAA: {len(all_annotations)}")
-    print(
-        f"Total binary annotations collected for overall IAA: {len(all_binary_annotations)}")
-
-    # Calculate overall Krippendorff's Alpha
-    if all_annotations:
-        # Count unique annotators, items, and conversations
-        unique_annotators = set(annotator for annotator,
-                                _, _ in all_annotations)
-        unique_items = set(item for _, item, _ in all_annotations)
-        unique_conversations = set(item.split(
-            '_')[0] for _, item, _ in all_annotations)
-
-        print(f"Unique annotators: {len(unique_annotators)}")
-        print(f"Unique items: {len(unique_items)}")
-        print(f"Unique conversations: {len(unique_conversations)}")
-
-        overall_task = agreement.AnnotationTask(data=all_annotations)
-        try:
-            overall_alpha = overall_task.alpha()
-            print(f"Overall (Original Scores): {overall_alpha:.4f}")
-        except ValueError as e:
-            print(
-                f"Overall (Original Scores): Could not calculate Alpha - {e}")
-    else:
-        print("Overall (Original Scores): No data")
-
-    if all_binary_annotations:
-        # Debug information about binary annotations
-        ones_count = sum(
-            1 for _, _, score in all_binary_annotations if score == '1')
-        zeros_count = sum(
-            1 for _, _, score in all_binary_annotations if score == '0')
-        print(
-            f"Binary annotations: {len(all_binary_annotations)} total, {ones_count} ones, {zeros_count} zeros")
-
-        # Count unique annotators and items for binary annotations
-        unique_binary_annotators = set(
-            annotator for annotator, _, _ in all_binary_annotations)
-        unique_binary_items = set(
-            item for _, item, _ in all_binary_annotations)
-        print(f"Unique binary annotators: {len(unique_binary_annotators)}")
-        print(f"Unique binary items: {len(unique_binary_items)}")
-
-        overall_binary_task = agreement.AnnotationTask(
-            data=all_binary_annotations)
-        try:
-            overall_binary_alpha = overall_binary_task.alpha()
-            print(f"Overall (Binary Scores): {overall_binary_alpha:.4f}")
-        except ValueError as e:
-            print(f"Overall (Binary Scores): Could not calculate Alpha - {e}")
-    else:
-        print("Overall (Binary Scores): No data")
+    for field in binary_fields:
+        binary_annotations = extract_binary_annotations(
+            survey_responses, field)
+        import pdb
+        pdb.set_trace()
+        results = analyze_binary_annotations(binary_annotations)
+        print_results(results, field)
 
 
-if __name__ == "__main__":
-    # TODO: Ensure Firebase Admin SDK is initialized before calling get_conversations_from_firestore
-    # For local development, you might need to set the GOOGLE_APPLICATION_CREDENTIALS environment variable
-    # or initialize with a service account key.
-    # Example:
-    # if not firebase_admin._apps:
-    #     cred = credentials.ApplicationDefault()
-    #     firebase_admin.initialize_app(cred)
-
-    # Get survey responses and conversations
+def main():
+    """
+    Main function to run the analysis.
+    """
+    # Load data from Firestore
     survey_responses = get_conversations_from_firestore()
     conversations = get_conversations_collection()
 
-    # Perform standard IAA analysis
-    perform_iaa_analysis(survey_responses)
-    perform_masi_analysis(survey_responses)
+    if not survey_responses:
+        print("No survey responses loaded. Exiting.")
+        return
 
-    # Perform IAA analysis based on prompted category
-    perform_prompted_iaa_analysis(survey_responses, conversations)
+    # Analyze binary annotations from survey responses
+    analyze_all_binary_fields(survey_responses)
+
+
+if __name__ == "__main__":
+    main()
