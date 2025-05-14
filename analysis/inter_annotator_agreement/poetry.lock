@@ -680,6 +680,20 @@ files = [
 ]
 
 [[package]]
+name = "krippendorff"
+version = "0.8.1"
+description = "Fast computation of the Krippendorff's alpha measure."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "krippendorff-0.8.1-py3-none-any.whl", hash = "sha256:afd9ba1adf8866f567abb643312aedc92d39b5b8612f99b68998508e3591c437"},
+    {file = "krippendorff-0.8.1.tar.gz", hash = "sha256:a8f73d87411a69b2ada62ce60573e1b99388bb084c8c0fa7b4d3598edcf3c0be"},
+]
+
+[package.dependencies]
+numpy = ">=1.21,<3"
+
+[[package]]
 name = "msgpack"
 version = "1.1.0"
 description = "MessagePack serializer"
@@ -1136,4 +1150,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "908c68dabfc3a5b35ab9a7c43f67c869991d760d20113788ee4cc3f35044be56"
+content-hash = "a34b6b7ea6c35925347957250df02d575fb925099f0d52c95f2fc593dfbc276f"

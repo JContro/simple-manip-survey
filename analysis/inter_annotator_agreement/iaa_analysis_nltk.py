@@ -1,10 +1,12 @@
 from nltk.metrics import agreement
+from nltk.metrics.distance import masi_distance
 import nltk
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import numpy as np
 from collections import defaultdict
+import krippendorff
 
 # Initialize Firebase Admin SDK if not already initialized
 if not firebase_admin._apps:
@@ -150,7 +152,7 @@ def perform_iaa_analysis(conversations):
     for annotator, item, category in filtered_annotations:
         try:
             score = int(category)
-            binary_score = '1' if score > 4 else '0'
+            binary_score = '1' if score >= 4 else '0'
             binary_annotations.append((annotator, item, binary_score))
         except ValueError:
             # Handle cases where category is not a valid integer
@@ -196,46 +198,10 @@ def perform_iaa_analysis(conversations):
         print("  Overall: No data for binary analysis")
 
 
-def calculate_masi_distance(set1, set2):
-    """
-    Calculate MASI distance between two sets.
-    MASI = Jaccard * M, where M is a monotonicity factor.
-
-    Args:
-        set1: First set of annotations
-        set2: Second set of annotations
-
-    Returns:
-        MASI similarity score (1 - MASI distance)
-    """
-    # Handle empty sets
-    if not set1 and not set2:
-        return 1.0  # Perfect agreement on empty sets
-    if not set1 or not set2:
-        return 0.0  # No agreement when one set is empty
-
-    # Calculate Jaccard similarity
-    intersection = len(set1.intersection(set2))
-    union = len(set1.union(set2))
-    jaccard = intersection / union if union > 0 else 0
-
-    # Calculate monotonicity factor M
-    if set1 == set2:  # Perfect match
-        m = 1.0
-    elif set1.issubset(set2) or set2.issubset(set1):  # One is subset of the other
-        m = 0.67
-    elif intersection > 0:  # Non-empty intersection
-        m = 0.33
-    else:  # Disjoint sets
-        m = 0.0
-
-    # MASI similarity = Jaccard * M
-    return jaccard * m
-
-
 def perform_masi_analysis(conversations):
     """
-    Performs Inter-Annotator Agreement (IAA) analysis using MASI (Measuring Agreement on Set-valued Items).
+    Performs Inter-Annotator Agreement (IAA) analysis using MASI (Measuring Agreement on Set-valued Items)
+    using NLTK's implementation.
 
     Args:
         conversations: List of conversation annotations
@@ -304,9 +270,14 @@ def perform_masi_analysis(conversations):
                             annotators[annotator2][mt] == 1 and
                             mt == manip_type}
 
-                    # Calculate MASI for this pair and manipulative type
-                    masi = calculate_masi_distance(set1, set2)
-                    masi_scores.append(masi)
+                    # Calculate MASI similarity/agreement using NLTK (1 - distance)
+                    # Handle case when both sets are empty to avoid division by zero
+                    if not set1 and not set2:
+                        # Both sets are empty, consider them in perfect agreement
+                        masi_similarity = 1.0
+                    else:
+                        masi_similarity = 1 - masi_distance(set1, set2)
+                    masi_scores.append(masi_similarity)
 
         # Calculate average MASI for this manipulative type
         if masi_scores:
@@ -342,11 +313,17 @@ def perform_masi_analysis(conversations):
                         mt in annotators[annotator2] and
                         annotators[annotator2][mt] == 1}
 
-                # Calculate MASI for this pair across all manipulative types
-                masi = calculate_masi_distance(set1, set2)
-                overall_masi_scores.append(masi)
-                import pdb
-                pdb.set_trace()
+                # Calculate MASI similarity/agreement using NLTK (1 - distance)
+                # Handle case when both sets are empty to avoid division by zero
+                if not set1 and not set2:
+                    # Both sets are empty, consider them in perfect agreement
+                    masi_similarity = 1.0
+                else:
+                    masi_similarity = 1 - masi_distance(set1, set2)
+                overall_masi_scores.append(masi_similarity)
+                # Remove debugging breakpoint
+                # import pdb
+                # pdb.set_trace()
 
     # Calculate average overall MASI
     if overall_masi_scores:
@@ -472,7 +449,7 @@ def perform_prompted_iaa_analysis(survey_responses, conversations):
             for annotator, item, category_val in annotations:
                 try:
                     score = int(category_val)
-                    binary_score = '1' if score > 4 else '0'
+                    binary_score = '1' if score >= 4 else '0'
                     binary_annotations.append((annotator, item, binary_score))
                 except ValueError:
                     pass
@@ -576,7 +553,7 @@ def perform_prompted_iaa_analysis(survey_responses, conversations):
                 for annotator, item, category_val in annotations:
                     try:
                         score = int(category_val)
-                        binary_score = '1' if score > 4 else '0'
+                        binary_score = '1' if score >= 4 else '0'
                         all_binary_annotations.append(
                             (annotator, item, binary_score))
                     except ValueError:
@@ -642,14 +619,300 @@ def perform_prompted_iaa_analysis(survey_responses, conversations):
         print("Overall (Binary Scores): No data")
 
 
+def custom_masi_distance(v1, v2):
+    """
+    Implement MASI distance between two sets v1 and v2
+    MASI = 1 - (|v1 ∩ v2| / |v1 ∪ v2|) * m
+    where m reflects the relationship between sets
+
+    Args:
+        v1: First set (or list/tuple that will be converted to set)
+        v2: Second set (or list/tuple that will be converted to set)
+
+    Returns:
+        float: MASI distance between the two sets
+    """
+    # Convert to sets if they aren't already
+    v1_set = set(v1) if not isinstance(v1, set) else v1
+    v2_set = set(v2) if not isinstance(v2, set) else v2
+
+    if not v1_set and not v2_set:  # Both empty
+        return 0
+
+    intersection = len(v1_set & v2_set)
+    union = len(v1_set | v2_set)
+
+    # Calculate monotonicity factor
+    if v1_set == v2_set:  # Identity
+        m = 1
+    elif v1_set.issubset(v2_set) or v2_set.issubset(v1_set):  # Containment
+        m = 2/3
+    elif intersection > 0:  # Overlap
+        m = 1/3
+    else:  # Disjoint
+        m = 0
+
+    jaccard = intersection / union if union > 0 else 0
+    return 1 - (jaccard * m)
+
+
+def perform_krippendorff_masi_analysis(conversations):
+    """
+    Performs Inter-Annotator Agreement (IAA) analysis using Krippendorff's alpha
+    with a custom MASI distance function.
+
+    This implementation uses the krippendorff package rather than NLTK's implementation,
+    allowing for a custom distance metric.
+
+    Args:
+        conversations: List of conversation annotations
+    """
+    print("\n\n=== Performing IAA analysis using Krippendorff's alpha with custom MASI distance ===")
+
+    manipulative_types = [
+        "manipulative_emotional_blackmail",
+        "manipulative_fear_enhancement",
+        "manipulative_gaslighting",
+        "manipulative_general",
+        "manipulative_guilt_tripping",
+        "manipulative_negging",
+        "manipulative_peer_pressure",
+        "manipulative_reciprocity",
+    ]
+
+    # Group annotations by conversation_id and manipulative type
+    annotations_by_conv_type = defaultdict(lambda: defaultdict(list))
+
+    # First, collect all annotations grouped by conversation and manipulation type
+    for record in conversations:
+        annotator = record.get('username', 'unknown_annotator')
+        conversation_id = record.get(
+            'conversation_uuid', 'unknown_conversation')
+
+        for manip_type in manipulative_types:
+            rating = record.get(manip_type)
+            if rating is not None:  # Only include if annotated
+                try:
+                    # Convert to integer for analysis
+                    score = int(rating)
+                    annotations_by_conv_type[conversation_id][manip_type].append(
+                        (annotator, score))
+                except ValueError:
+                    print(
+                        f"Warning: Could not convert rating '{rating}' to integer for Krippendorff analysis.")
+
+    print("\n--- Original Scores Analysis ---")
+
+    # For each manipulation type, calculate Krippendorff's alpha
+    for manip_type in manipulative_types:
+        # Prepare reliability data for Krippendorff's alpha
+        reliability_data = []
+
+        # Get all conversations with this manipulation type
+        conversations_with_type = {conv_id: annotations for conv_id, annotations
+                                   in annotations_by_conv_type.items()
+                                   if manip_type in annotations}
+
+        # Skip if no conversations have this type
+        if not conversations_with_type:
+            print(f"  {manip_type}: No data")
+            continue
+
+        # Get all unique annotators across all conversations
+        all_annotators = set()
+        for conv_annotations in conversations_with_type.values():
+            for manip_annotations in conv_annotations.values():
+                for annotator, _ in manip_annotations:
+                    all_annotators.add(annotator)
+
+        # Convert to list for consistent ordering
+        all_annotators = sorted(list(all_annotators))
+
+        # For each conversation, create a row in the reliability data
+        for conv_id, conv_annotations in conversations_with_type.items():
+            if manip_type not in conv_annotations:
+                continue
+
+            # Skip conversations with only one annotator
+            if len(set(annotator for annotator, _ in conv_annotations[manip_type])) < 2:
+                continue
+
+            # Create a row for each annotator (with missing values for annotators who didn't rate this item)
+            annotator_scores = {annotator: score for annotator,
+                                score in conv_annotations[manip_type]}
+
+            # Add a row to reliability_data with each annotator's score (or None if missing)
+            row = [annotator_scores.get(annotator)
+                   for annotator in all_annotators]
+            reliability_data.append(row)
+
+        # Skip if no valid data
+        if not reliability_data:
+            print(f"  {manip_type}: No valid data with multiple annotators")
+            continue
+
+        # Calculate Krippendorff's alpha with the custom MASI distance function
+        try:
+            # For original scores, we use the default interval metric
+            alpha = krippendorff.alpha(reliability_data=reliability_data)
+            print(f"  {manip_type}: {alpha:.4f}")
+        except Exception as e:
+            print(f"  {manip_type}: Could not calculate Alpha - {e}")
+
+    # Calculate overall Krippendorff's alpha across all manipulation types
+    print("\nOverall Krippendorff's alpha (Original Scores):")
+
+    # Prepare overall reliability data
+    overall_reliability_data = []
+    all_annotators = set()
+
+    # Get all unique annotators across all conversations and types
+    for conv_annotations in annotations_by_conv_type.values():
+        for manip_annotations in conv_annotations.values():
+            for annotator, _ in manip_annotations:
+                all_annotators.add(annotator)
+
+    # Convert to list for consistent ordering
+    all_annotators = sorted(list(all_annotators))
+
+    # For each conversation and manipulation type, create a row in the reliability data
+    for conv_id, conv_annotations in annotations_by_conv_type.items():
+        for manip_type, manip_annotations in conv_annotations.items():
+            # Skip items with only one annotator
+            if len(set(annotator for annotator, _ in manip_annotations)) < 2:
+                continue
+
+            # Create a row for each annotator
+            annotator_scores = {
+                annotator: score for annotator, score in manip_annotations}
+
+            # Add a row to reliability_data with each annotator's score (or None if missing)
+            row = [annotator_scores.get(annotator)
+                   for annotator in all_annotators]
+            overall_reliability_data.append(row)
+
+    # Calculate overall Krippendorff's alpha
+    if overall_reliability_data:
+        try:
+            overall_alpha = krippendorff.alpha(
+                reliability_data=overall_reliability_data)
+            print(f"  Overall: {overall_alpha:.4f}")
+        except Exception as e:
+            print(f"  Overall: Could not calculate Alpha - {e}")
+    else:
+        print("  Overall: No valid data")
+
+    # --- Binary Analysis ---
+    print("\n--- Binary Analysis (Scores >= 4 are 1, else 0) ---")
+
+    # For each manipulation type, calculate Krippendorff's alpha with binary scores
+    for manip_type in manipulative_types:
+        # Prepare reliability data for Krippendorff's alpha
+        binary_reliability_data = []
+
+        # Get all conversations with this manipulation type
+        conversations_with_type = {conv_id: annotations for conv_id, annotations
+                                   in annotations_by_conv_type.items()
+                                   if manip_type in annotations}
+
+        # Skip if no conversations have this type
+        if not conversations_with_type:
+            print(f"  {manip_type}: No data")
+            continue
+
+        # Get all unique annotators across all conversations
+        all_annotators = set()
+        for conv_annotations in conversations_with_type.values():
+            for manip_annotations in conv_annotations.values():
+                for annotator, _ in manip_annotations:
+                    all_annotators.add(annotator)
+
+        # Convert to list for consistent ordering
+        all_annotators = sorted(list(all_annotators))
+
+        # For each conversation, create a row in the reliability data
+        for conv_id, conv_annotations in conversations_with_type.items():
+            if manip_type not in conv_annotations:
+                continue
+
+            # Skip conversations with only one annotator
+            if len(set(annotator for annotator, _ in conv_annotations[manip_type])) < 2:
+                continue
+
+            # Create a row for each annotator with binary scores
+            annotator_scores = {annotator: 1 if score >= 4 else 0
+                                for annotator, score in conv_annotations[manip_type]}
+
+            # Add a row to reliability_data with each annotator's binary score
+            row = [annotator_scores.get(annotator)
+                   for annotator in all_annotators]
+            binary_reliability_data.append(row)
+
+        # Skip if no valid data
+        if not binary_reliability_data:
+            print(f"  {manip_type}: No valid binary data with multiple annotators")
+            continue
+
+        # Calculate Krippendorff's alpha with the custom MASI distance function for binary data
+        try:
+            # For binary data, we use the custom MASI distance function
+            alpha = krippendorff.alpha(
+                reliability_data=binary_reliability_data, value_domain=custom_masi_distance)
+            print(f"  {manip_type}: {alpha:.4f}")
+        except Exception as e:
+            print(f"  {manip_type}: Could not calculate Binary Alpha - {e}")
+
+    # Calculate overall Krippendorff's alpha for binary scores
+    print("\nOverall Krippendorff's alpha (Binary Scores):")
+
+    # Prepare overall binary reliability data
+    overall_binary_reliability_data = []
+
+    # For each conversation and manipulation type, create a row in the reliability data
+    for conv_id, conv_annotations in annotations_by_conv_type.items():
+        for manip_type, manip_annotations in conv_annotations.items():
+            # Skip items with only one annotator
+            if len(set(annotator for annotator, _ in manip_annotations)) < 2:
+                continue
+
+            # Create a row for each annotator with binary scores
+            annotator_scores = {annotator: 1 if score >= 4 else 0
+                                for annotator, score in manip_annotations}
+
+            # Add a row to reliability_data with each annotator's binary score
+            row = [annotator_scores.get(annotator)
+                   for annotator in all_annotators]
+            overall_binary_reliability_data.append(row)
+
+    # Calculate overall Krippendorff's alpha for binary scores
+    if overall_binary_reliability_data:
+        try:
+            overall_binary_alpha = krippendorff.alpha(
+                reliability_data=overall_binary_reliability_data,
+                value_domain=custom_masi_distance
+            )
+            print(f"  Overall: {overall_binary_alpha:.4f}")
+        except Exception as e:
+            print(f"  Overall: Could not calculate Overall Binary Alpha - {e}")
+    else:
+        print("  Overall: No valid binary data")
+
+
 if __name__ == "__main__":
-    # TODO: Ensure Firebase Admin SDK is initialized before calling get_conversations_from_firestore
-    # For local development, you might need to set the GOOGLE_APPLICATION_CREDENTIALS environment variable
-    # or initialize with a service account key.
-    # Example:
-    # if not firebase_admin._apps:
-    #     cred = credentials.ApplicationDefault()
-    #     firebase_admin.initialize_app(cred)
+    # Ensure nltk has the required data
+    try:
+        nltk.data.find('metrics/masi_distance.py')
+    except LookupError:
+        print("Downloading required NLTK data...")
+        # Disable SSL verification to work around certificate issues
+        import ssl
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context
+        except AttributeError:
+            pass
+        else:
+            ssl._create_default_https_context = _create_unverified_https_context
+        nltk.download('masi_distance')
 
     # Get survey responses and conversations
     survey_responses = get_conversations_from_firestore()
@@ -661,3 +924,6 @@ if __name__ == "__main__":
 
     # Perform IAA analysis based on prompted category
     perform_prompted_iaa_analysis(survey_responses, conversations)
+
+    # Perform Krippendorff's alpha analysis with custom MASI distance
+    perform_krippendorff_masi_analysis(survey_responses)
