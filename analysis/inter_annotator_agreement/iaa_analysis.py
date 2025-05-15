@@ -52,14 +52,16 @@ def get_conversations_collection():
 
 def extract_binary_annotations(survey_responses):
     """
-    Extract binary annotations from survey responses based on a specific field.
+    Extract binary annotations from survey responses for all manipulative fields.
 
     Args:
         survey_responses: List of survey response dictionaries
-        field_name: Field name to extract binary values from
 
     Returns:
-        Dictionary mapping conversation IDs to lists of binary annotations
+        List of tuples (coder, item, value) where:
+        - coder is the username of the annotator
+        - item is the conversation UUID and field name
+        - value is the binary annotation (0 or 1)
     """
     binary_annotations = []
 
@@ -79,13 +81,13 @@ def extract_binary_annotations(survey_responses):
 
 def calculate_iaa(binary_annotations):
     """
-    Calculate Krippendorff's alpha for overall 
+    Calculate Krippendorff's alpha and related statistics for overall analysis.
 
     Args:
         binary_annotations: List of tuples (coder, item, value)
 
     Returns:
-        Dictionary with analysis results including overall alpha 
+        Dictionary with analysis results including overall alpha
     """
     results = {
         'total_conversations': 0,
@@ -97,8 +99,7 @@ def calculate_iaa(binary_annotations):
         return results
 
     # Calculate overall Krippendorff's alpha
-    task = agreement.AnnotationTask(data=binary_annotations)
-    results['overall_alpha'] = task.alpha()
+    results['overall_alpha'] = calculate_krippendorff_alpha(binary_annotations)
 
     # Calculate Krippendorff's alpha per conversation
     annotations_by_conversation = defaultdict(list)
@@ -120,9 +121,13 @@ def calculate_iaa(binary_annotations):
 
 def calculate_overall_alpha(survey_responses):
     """
+    Calculate overall Krippendorff's alpha for all survey responses.
 
     Args:
         survey_responses: List of survey response dictionaries
+
+    Returns:
+        Dictionary with analysis results
     """
     all_binary_annotations = extract_binary_annotations(survey_responses)
     results = calculate_iaa(all_binary_annotations)
@@ -130,8 +135,14 @@ def calculate_overall_alpha(survey_responses):
     return results
 
 
-def calculate_prompted_field_alpha(survey_responses, conversations):
-    mapping = {
+def get_field_mapping():
+    """
+    Returns the mapping between survey field names and prompted manipulation tactics.
+
+    Returns:
+        Dictionary mapping field names to prompted tactic names
+    """
+    return {
         "manipulative_emotional_blackmail": "Emotional Blackmail",
         "manipulative_fear_enhancement": "Fear Enhancement",
         "manipulative_gaslighting": "Gaslighting",
@@ -142,42 +153,134 @@ def calculate_prompted_field_alpha(survey_responses, conversations):
         "manipulative_reciprocity": "Reciprocity Pressure"
     }
 
+
+def filter_records_by_field(binary_responses, field, prompted_as, conversations):
+    """
+    Filter binary responses based on field name and prompted value.
+
+    Args:
+        binary_responses: List of tuples (coder, item, value)
+        field: Field name to filter by
+        prompted_as: Prompted value to filter by
+        conversations: Dictionary mapping conversation UUIDs to conversation data
+
+    Returns:
+        List of filtered records
+    """
+    filtered_records = []
+
+    if field == "manipulative_general":
+        # For "general", include all UUIDs
+        filtered_records = [r for r in binary_responses if field in r[1]]
+    else:
+        # For specific fields, filter by the prompted_as value
+        for uuid, conv_data in conversations.items():
+            if conv_data['prompted_as'] == prompted_as:
+                records = [
+                    r for r in binary_responses if uuid in r[1] and field in r[1]]
+                filtered_records.extend(records)
+
+    return filtered_records
+
+
+def calculate_krippendorff_alpha(filtered_records):
+    """
+    Calculate Krippendorff's alpha for a set of filtered records.
+
+    Args:
+        filtered_records: List of tuples (coder, item, value)
+
+    Returns:
+        Krippendorff's alpha value or None if calculation is not possible
+    """
+    if not filtered_records:
+        return None
+
+    task = agreement.AnnotationTask(data=filtered_records)
+    return task.alpha()
+
+
+def calculate_prompted_field_alpha(survey_responses, conversations):
+    """
+    Calculate Krippendorff's alpha for each field based on prompted values.
+
+    Args:
+        survey_responses: List of survey response dictionaries
+        conversations: Dictionary mapping conversation UUIDs to conversation data
+
+    Returns:
+        Dictionary mapping field names to Krippendorff's alpha values
+    """
+    mapping = get_field_mapping()
     binary_responses = extract_binary_annotations(survey_responses)
-    # for key in mapping - match it to the binary responses (filter)
-    # then only keep the uuids that were prompted to the value of that key
-    # for example {uuid}-manipulative_emotional_blackmail values and then only keep the uuids of the "Emotional Blackmail" prompted_as in conversations
-    # for general - do all the conversations
     results_by_field = {}
 
     for field, prompted_as in mapping.items():
-        filtered_records = []
-
-        if field == "manipulative_general":
-            # For "general", include all UUIDs
-            filtered_records = [r for r in binary_responses if field in r[1]]
-        else:
-            # For specific fields, filter by the prompted_as value
-            for uuid, conv_data in conversations.items():
-                if conv_data['prompted_as'] == prompted_as:
-                    records = [
-                        r for r in binary_responses if uuid in r[1] and field in r[1]]
-                    filtered_records.extend(records)
+        filtered_records = filter_records_by_field(
+            binary_responses, field, prompted_as, conversations
+        )
 
         # Calculate Krippendorff's alpha for the filtered records
-        if filtered_records:
-            task = agreement.AnnotationTask(data=filtered_records)
-            alpha = task.alpha()
-            results_by_field[field] = alpha
-        else:
-            results_by_field[field] = None
-        # import pdb
-        # pdb.set_trace()
+        results_by_field[field] = calculate_krippendorff_alpha(
+            filtered_records)
 
     print("Krippendorff's Alpha by Field:")
     for field, alpha in results_by_field.items():
         print(f"{field}: {alpha}")
-    # import pdb
-    # pdb.set_trace()
+
+    return results_by_field
+
+
+def calculate_gwet_ac1(filtered_records):
+    """
+    Calculate Gwet's AC1 coefficient for a set of filtered records.
+
+    Args:
+        filtered_records: List of tuples (coder, item, value)
+
+    Returns:
+        Gwet's AC1 coefficient value or None if calculation is not possible
+    """
+    if not filtered_records or len(filtered_records) <= 1:
+        return None
+
+    # Convert filtered records to a format suitable for irrCAC
+    # Group by item and create a contingency table
+    annotations_by_item = {}
+    for coder, item, value in filtered_records:
+        if item not in annotations_by_item:
+            annotations_by_item[item] = {}
+        annotations_by_item[item][coder] = value
+
+    # Create a contingency table
+    # For binary data (0 and 1), we need a 2x2 table
+    contingency_table = pd.DataFrame(
+        0, index=['0', '1'], columns=['0', '1'])
+
+    # Count occurrences of each rating combination
+    for item_annotations in annotations_by_item.values():
+        # Skip items with only one annotation
+        if len(item_annotations) <= 1:
+            continue
+
+        # Count ratings for this item
+        ratings = list(item_annotations.values())
+        for i in range(len(ratings)):
+            for j in range(i+1, len(ratings)):
+                # Convert to string keys for the DataFrame
+                rating_i = str(ratings[i])
+                rating_j = str(ratings[j])
+                contingency_table.loc[rating_i, rating_j] += 1
+                # Also increment the symmetric cell
+                contingency_table.loc[rating_j, rating_i] += 1
+
+    # Calculate Gwet's AC1 using irrCAC
+    if contingency_table.sum().sum() > 0:  # Ensure we have data
+        cac = CAC(contingency_table)
+        gwet_result = cac.gwet()
+        return gwet_result['est']['coefficient_value']
+    else:
+        return None
 
 
 def calculate_prompted_field_gwet_ac1(survey_responses, conversations):
@@ -191,75 +294,17 @@ def calculate_prompted_field_gwet_ac1(survey_responses, conversations):
     Returns:
         Dictionary mapping field names to Gwet's AC1 coefficients
     """
-    mapping = {
-        "manipulative_emotional_blackmail": "Emotional Blackmail",
-        "manipulative_fear_enhancement": "Fear Enhancement",
-        "manipulative_gaslighting": "Gaslighting",
-        "manipulative_general": None,  # No direct match in the second list
-        "manipulative_guilt_tripping": "Guilt-Tripping",
-        "manipulative_negging": "Negging",
-        "manipulative_peer_pressure": "Peer Pressure",
-        "manipulative_reciprocity": "Reciprocity Pressure"
-    }
-
+    mapping = get_field_mapping()
     binary_responses = extract_binary_annotations(survey_responses)
     results_by_field = {}
 
     for field, prompted_as in mapping.items():
-        filtered_records = []
-
-        if field == "manipulative_general":
-            # For "general", include all UUIDs
-            filtered_records = [r for r in binary_responses if field in r[1]]
-        else:
-            # For specific fields, filter by the prompted_as value
-            for uuid, conv_data in conversations.items():
-                if conv_data['prompted_as'] == prompted_as:
-                    records = [
-                        r for r in binary_responses if uuid in r[1] and field in r[1]]
-                    filtered_records.extend(records)
+        filtered_records = filter_records_by_field(
+            binary_responses, field, prompted_as, conversations
+        )
 
         # Calculate Gwet's AC1 for the filtered records
-        if filtered_records and len(filtered_records) > 1:
-            # Convert filtered records to a format suitable for irrCAC
-            # Group by item and create a contingency table
-            annotations_by_item = {}
-            for coder, item, value in filtered_records:
-                if item not in annotations_by_item:
-                    annotations_by_item[item] = {}
-                annotations_by_item[item][coder] = value
-
-            # Create a contingency table
-            # For binary data (0 and 1), we need a 2x2 table
-            contingency_table = pd.DataFrame(
-                0, index=['0', '1'], columns=['0', '1'])
-
-            # Count occurrences of each rating combination
-            for item_annotations in annotations_by_item.values():
-                # Skip items with only one annotation
-                if len(item_annotations) <= 1:
-                    continue
-
-                # Count ratings for this item
-                ratings = list(item_annotations.values())
-                for i in range(len(ratings)):
-                    for j in range(i+1, len(ratings)):
-                        # Convert to string keys for the DataFrame
-                        rating_i = str(ratings[i])
-                        rating_j = str(ratings[j])
-                        contingency_table.loc[rating_i, rating_j] += 1
-                        # Also increment the symmetric cell
-                        contingency_table.loc[rating_j, rating_i] += 1
-
-            # Calculate Gwet's AC1 using irrCAC
-            if contingency_table.sum().sum() > 0:  # Ensure we have data
-                cac = CAC(contingency_table)
-                gwet_result = cac.gwet()
-                results_by_field[field] = gwet_result['est']['coefficient_value']
-            else:
-                results_by_field[field] = None
-        else:
-            results_by_field[field] = None
+        results_by_field[field] = calculate_gwet_ac1(filtered_records)
 
     print("Gwet's AC1 by Field:")
     for field, ac1 in results_by_field.items():
