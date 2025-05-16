@@ -135,6 +135,22 @@ def calculate_overall_alpha(survey_responses):
     return results
 
 
+def calculate_overall_gwet_ac1(survey_responses):
+    """
+    Calculate overall Gwet's AC1 coefficient for all survey responses.
+
+    Args:
+        survey_responses: List of survey response dictionaries
+
+    Returns:
+        Gwet's AC1 coefficient value or None if calculation is not possible
+    """
+    all_binary_annotations = extract_binary_annotations(survey_responses)
+    overall_gwet_ac1 = calculate_gwet_ac1(all_binary_annotations)
+    print(f"Total Overall Gwet's AC1: {overall_gwet_ac1}")
+    return overall_gwet_ac1
+
+
 def get_field_mapping():
     """
     Returns the mapping between survey field names and prompted manipulation tactics.
@@ -313,6 +329,41 @@ def calculate_prompted_field_gwet_ac1(survey_responses, conversations):
     return results_by_field
 
 
+def calculate_unfiltered_field_iaa(survey_responses):
+    """
+    Calculate Krippendorff's alpha and Gwet's AC1 for each field without filtering by prompted value.
+
+    Args:
+        survey_responses: List of survey response dictionaries
+
+    Returns:
+        Dictionary mapping field names to a dictionary of alpha and AC1 values
+    """
+    mapping = get_field_mapping()
+    binary_responses = extract_binary_annotations(survey_responses)
+    results_by_field = {}
+
+    print("\n=== Calculating Unfiltered IAA by Field ===")
+
+    for field in mapping.keys():
+        # Filter records only by field name, not by prompted_as
+        filtered_records = [r for r in binary_responses if field in r[1]]
+
+        # Calculate Krippendorff's alpha for the filtered records
+        alpha = calculate_krippendorff_alpha(filtered_records)
+
+        # Calculate Gwet's AC1 for the filtered records
+        ac1 = calculate_gwet_ac1(filtered_records)
+
+        results_by_field[field] = {
+            'krippendorff_alpha': alpha,
+            'gwet_ac1': ac1
+        }
+        print(f"{field}: Alpha={alpha}, AC1={ac1}")
+
+    return results_by_field
+
+
 def main():
     """
     Main function to run the analysis.
@@ -329,13 +380,20 @@ def main():
     results_overall_alpha = calculate_overall_alpha(survey_responses)
     print(results_overall_alpha)
 
-    # Calculate Krippendorff's alpha by field
-    print("\n=== Calculating Krippendorff's Alpha by Field ===")
+    # Calculate overall Gwet's AC1
+    print("\n=== Calculating Overall Gwet's AC1 ===")
+    calculate_overall_gwet_ac1(survey_responses)
+
+    # Calculate Krippendorff's alpha by field (filtered by prompted value)
+    print("\n=== Calculating Krippendorff's Alpha by Field (Filtered) ===")
     calculate_prompted_field_alpha(survey_responses, conversations)
 
-    # Calculate Gwet's AC1 by field
-    print("\n=== Calculating Gwet's AC1 by Field ===")
+    # Calculate Gwet's AC1 by field (filtered by prompted value)
+    print("\n=== Calculating Gwet's AC1 by Field (Filtered) ===")
     calculate_prompted_field_gwet_ac1(survey_responses, conversations)
+
+    # Calculate unfiltered IAA by field
+    calculate_unfiltered_field_iaa(survey_responses)
 
 
 if __name__ == "__main__":
